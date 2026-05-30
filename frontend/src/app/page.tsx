@@ -1,17 +1,16 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { useAuth } from '@/lib/auth';
+import { useState, useEffect } from 'react';
+import SidebarLayout from '@/components/SidebarLayout';
 import { useRoom } from '@/lib/useRoom';
+import { useProfile } from '@/lib/useProfile';
 import type { Room, Player, RoomEvent } from '@dbt-online/shared';
 
 type View = 'home' | 'create' | 'join' | 'lobby';
 
-export default function Home() {
-  const { user, loading: authLoading, logout } = useAuth();
+export default function GamePage() {
+  const { profile } = useProfile();
   const {
-    view,
     room,
     player,
     playerName,
@@ -28,68 +27,16 @@ export default function Home() {
   const [localView, setLocalView] = useState<View>('home');
   const currentView = room ? 'lobby' : localView;
 
-  // ── Cargando auth ────────────────────────────────────────
-  if (authLoading) {
-    return (
-      <main className="flex min-h-screen items-center justify-center">
-        <p className="text-gray-400">Cargando...</p>
-      </main>
-    );
-  }
+  // Sincronizar username del perfil
+  useEffect(() => {
+    if (profile?.username && !playerName) {
+      setPlayerName(profile.username);
+    }
+  }, [profile, playerName, setPlayerName]);
 
-  // ── No autenticado ───────────────────────────────────────
-  if (!user) {
-    return (
-      <main className="flex min-h-screen flex-col items-center justify-center p-4">
-        <div className="w-full max-w-sm text-center space-y-6">
-          <h1 className="text-5xl font-bold text-white">DBT Online</h1>
-          <p className="text-gray-400">
-            Juego de cartas por turnos con amigos
-          </p>
-          <div className="space-y-3">
-            <Link
-              href="/login"
-              className="block w-full rounded-lg bg-[#e94560] px-6 py-3 font-semibold text-white hover:bg-[#d63850]"
-            >
-              Iniciar sesión
-            </Link>
-            <Link
-              href="/register"
-              className="block w-full rounded-lg border border-gray-600 px-6 py-3 font-semibold text-white hover:bg-gray-800"
-            >
-              Crear cuenta
-            </Link>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
-  // ── Autenticado — juego ──────────────────────────────────
   return (
-    <main className="flex min-h-screen flex-col p-4">
-      {/* Header */}
-      <header className="mx-auto flex w-full max-w-md items-center justify-between">
-        <h1 className="text-xl font-bold text-white">DBT Online</h1>
-        <div className="flex items-center gap-3">
-          <Link
-            href="/friends"
-            className="text-sm text-gray-400 hover:text-white"
-          >
-            Amigos
-          </Link>
-          <span className="text-sm text-gray-500">{user.email}</span>
-          <button
-            onClick={logout}
-            className="text-sm text-gray-500 hover:text-[#e94560]"
-          >
-            Salir
-          </button>
-        </div>
-      </header>
-
-      {/* Contenido */}
-      <div className="flex flex-1 flex-col items-center justify-center">
+    <SidebarLayout>
+      <div className="flex flex-1 flex-col items-center justify-center p-4 pb-20 md:pb-4">
         <div className="w-full max-w-md space-y-8 text-center">
           {/* Conexión */}
           {!connected && (
@@ -124,36 +71,29 @@ export default function Home() {
           {/* ─── HOME ──────────────────────────── */}
           {currentView === 'home' && (
             <div className="space-y-6">
-              <p className="text-gray-400">
-                Jugá al truco con amigos en salas 1vs1
-              </p>
-
               <div>
-                <label className="mb-1 block text-left text-sm text-gray-400">
-                  Tu nombre en el juego
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ej: Luquinuts"
-                  value={playerName}
-                  onChange={(e) => setPlayerName(e.target.value)}
-                  maxLength={20}
-                  className="w-full rounded-lg border border-gray-600 bg-transparent px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#e94560]"
-                />
+                <h2 className="text-2xl font-bold text-white">
+                  ¡Bienvenido, {profile?.username || 'Jugador'}!
+                </h2>
+                <p className="mt-1 text-sm text-gray-400">
+                  {connected
+                    ? 'Jugá 1vs1 con amigos'
+                    : 'Conectando al servidor...'}
+                </p>
               </div>
 
               {localView === 'home' && (
                 <div className="space-y-3">
                   <button
                     onClick={() => setLocalView('create')}
-                    disabled={!playerName.trim() || !connected}
+                    disabled={!connected}
                     className="w-full rounded-lg bg-[#e94560] px-6 py-3 font-semibold text-white transition hover:bg-[#d63850] disabled:opacity-50"
                   >
                     Crear Sala
                   </button>
                   <button
                     onClick={() => setLocalView('join')}
-                    disabled={!playerName.trim() || !connected}
+                    disabled={!connected}
                     className="w-full rounded-lg border border-gray-600 px-6 py-3 font-semibold text-white transition hover:bg-gray-800 disabled:opacity-50"
                   >
                     Unirse a Sala
@@ -164,7 +104,7 @@ export default function Home() {
               {localView === 'create' && (
                 <CreateView
                   onBack={() => setLocalView('home')}
-                  onCreate={(name) => createRoom(name)}
+                  onCreate={(name, isPublic) => createRoom(name, isPublic)}
                 />
               )}
 
@@ -178,7 +118,7 @@ export default function Home() {
           )}
         </div>
       </div>
-    </main>
+    </SidebarLayout>
   );
 }
 
@@ -189,9 +129,10 @@ function CreateView({
   onCreate,
 }: {
   onBack: () => void;
-  onCreate: (name: string) => void;
+  onCreate: (name: string, isPublic: boolean) => void;
 }) {
   const [roomName, setRoomName] = useState('');
+  const [isPublic, setIsPublic] = useState(true);
 
   return (
     <div className="space-y-4">
@@ -204,8 +145,33 @@ function CreateView({
         maxLength={30}
         className="w-full rounded-lg border border-gray-600 bg-transparent px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#e94560]"
       />
+
+      {/* Visibilidad */}
+      <div className="flex items-center justify-between rounded-lg border border-gray-700 bg-gray-800/50 px-4 py-3">
+        <div className="text-left">
+          <p className="text-sm text-white">Sala pública</p>
+          <p className="text-xs text-gray-500">
+            {isPublic
+              ? 'Tus amigos van a poder ver que estás acá'
+              : 'Solo con el código pueden entrar'}
+          </p>
+        </div>
+        <button
+          onClick={() => setIsPublic(!isPublic)}
+          className={`relative h-6 w-11 rounded-full transition ${
+            isPublic ? 'bg-[#e94560]' : 'bg-gray-600'
+          }`}
+        >
+          <span
+            className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition ${
+              isPublic ? 'translate-x-5' : ''
+            }`}
+          />
+        </button>
+      </div>
+
       <button
-        onClick={() => onCreate(roomName)}
+        onClick={() => onCreate(roomName, isPublic)}
         disabled={!roomName.trim()}
         className="w-full rounded-lg bg-[#e94560] px-6 py-3 font-semibold text-white transition hover:bg-[#d63850] disabled:opacity-50"
       >

@@ -85,11 +85,14 @@ export function useRoom() {
     };
   }, []);
 
-  const createRoom = useCallback((name: string, maxPlayers = 4) => {
-    const socket = getSocket();
-    if (!socket.connected) return;
-    socket.emit('room:create', { name, maxPlayers });
-  }, []);
+  const createRoom = useCallback(
+    (name: string, isPublic = true) => {
+      const socket = getSocket();
+      if (!socket.connected) return;
+      socket.emit('room:create', { name, maxPlayers: 2, isPublic });
+    },
+    []
+  );
 
   const joinRoom = useCallback((code: string) => {
     const socket = getSocket();
