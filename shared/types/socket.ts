@@ -8,6 +8,7 @@ export interface ClientToServerEvents {
   // Sala
   'room:create': (data: {
     name: string;
+    playerName: string;
     maxPlayers?: number;
     isPublic?: boolean;
   }) => void;

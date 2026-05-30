@@ -89,7 +89,12 @@ export function useRoom() {
     (name: string, isPublic = true) => {
       const socket = getSocket();
       if (!socket.connected) return;
-      socket.emit('room:create', { name, maxPlayers: 2, isPublic });
+      socket.emit('room:create', {
+        name,
+        playerName: stateRef.current.playerName,
+        maxPlayers: 2,
+        isPublic,
+      });
     },
     []
   );

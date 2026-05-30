@@ -225,14 +225,21 @@ io.on('connection', async (socket) => {
   }
 
   // ── Crear sala ─────────────────────────────────────────────
-  socket.on('room:create', ({ name, maxPlayers, isPublic = true }) => {
+  socket.on('room:create', ({ name, playerName, maxPlayers, isPublic = true }) => {
     const code = generateCode();
+    const player: Player = {
+      id: socket.id,
+      name: playerName || name,
+      isHost: true,
+      joinedAt: new Date().toISOString(),
+    };
+
     const room: RoomStore = {
       id: uuid(),
       code,
       name,
       status: 'waiting',
-      players: [],
+      players: [player],
       maxPlayers: 2,
       hostUserId: userId ?? socket.id,
       isPublic,
@@ -242,11 +249,13 @@ io.on('connection', async (socket) => {
 
     rooms.set(room.id, room);
     socket.data.roomId = room.id;
+    socket.data.playerId = player.id;
 
     socket.join(room.id);
     console.log(`[room:create] ${room.id} (${code}) público:${isPublic}`);
 
-    io.to(room.id).emit('room:updated', { room });
+    socket.emit('room:joined', { room, player });
+    socket.to(room.id).emit('room:updated', { room });
 
     // Presencia: actualizar estado si es usuario autenticado
     if (userId) {
