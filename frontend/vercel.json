@@ -1,0 +1,4 @@
+{
+  "installCommand": "cd .. && npm install && npm run build -w @dbt-online/shared",
+  "framework": "nextjs"
+}
