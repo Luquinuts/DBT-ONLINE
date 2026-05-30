@@ -28,7 +28,7 @@ export default function FriendsPage() {
   const { user } = useAuth();
   const [friends, setFriends] = useState<Friend[]>([]);
   const [requests, setRequests] = useState<FriendRequest[]>([]);
-  const [friendEmail, setFriendEmail] = useState('');
+  const [friendQuery, setFriendQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -108,6 +108,13 @@ export default function FriendsPage() {
     const token = await getToken();
     if (!token) return;
 
+    const body: Record<string, string> = {};
+    if (friendQuery.includes('@')) {
+      body.friendEmail = friendQuery;
+    } else {
+      body.friendUsername = friendQuery;
+    }
+
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/friends/request`,
       {
@@ -116,7 +123,7 @@ export default function FriendsPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ friendEmail }),
+        body: JSON.stringify(body),
       }
     );
 
@@ -125,8 +132,8 @@ export default function FriendsPage() {
     if (!res.ok) {
       setError(data.error);
     } else {
-      setSuccess(`Solicitud enviada a ${friendEmail}`);
-      setFriendEmail('');
+      setSuccess(`Solicitud enviada a ${friendQuery}`);
+      setFriendQuery('');
     }
   }
 
@@ -165,19 +172,19 @@ export default function FriendsPage() {
           {/* Agregar amigo */}
           <div className="space-y-2">
             <label className="block text-sm text-gray-400">
-              Agregar amigo por email
+              Agregar amigo por email o nombre de usuario
             </label>
             <div className="flex gap-2">
               <input
-                type="email"
-                placeholder="amigo@email.com"
-                value={friendEmail}
-                onChange={(e) => setFriendEmail(e.target.value)}
+                type="text"
+                placeholder="amigo@email.com o usuario"
+                value={friendQuery}
+                onChange={(e) => setFriendQuery(e.target.value)}
                 className="flex-1 rounded-lg border border-gray-600 bg-transparent px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#e94560]"
               />
               <button
                 onClick={sendRequest}
-                disabled={!friendEmail.trim()}
+                disabled={!friendQuery.trim()}
                 className="rounded-lg bg-[#e94560] px-4 py-2 font-semibold text-white hover:bg-[#d63850] disabled:opacity-50"
               >
                 Enviar

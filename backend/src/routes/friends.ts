@@ -1,23 +1,33 @@
 import { Router } from 'express';
 import { supabase } from '../db/client';
+import { getAuthClient } from '../db/auth-client';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 const router = Router();
 
-// ─── Middleware: extraer usuario ────────────────────────────────
-async function getUser(req: any) {
+// ─── Middleware: extraer token + crear cliente autenticado ──────
+async function getAuth(req: any): Promise<{
+  user: any;
+  sb: SupabaseClient;
+  token: string;
+} | null> {
   const auth = req.headers.authorization;
   if (!auth?.startsWith('Bearer ')) return null;
-  const { data, error } = await supabase.auth.getUser(auth.slice(7));
+  const token = auth.slice(7);
+  const sb = getAuthClient(token);
+  const { data, error } = await sb.auth.getUser();
   if (error || !data.user) return null;
-  return data.user;
+  return { user: data.user, sb, token };
 }
 
 // ─── GET /api/friends — amigos aceptados ───────────────────────
 router.get('/', async (req, res) => {
-  const user = await getUser(req);
-  if (!user) return res.status(401).json({ error: 'No autorizado' });
+  const auth = await getAuth(req);
+  if (!auth) return res.status(401).json({ error: 'No autorizado' });
 
-  const { data, error } = await supabase
+  const { user, sb } = auth;
+
+  const { data, error } = await sb
     .from('friends')
     .select('id, requester_id, addressee_id, created_at')
     .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
@@ -31,7 +41,7 @@ router.get('/', async (req, res) => {
   );
 
   // Traer emails + usernames de los perfiles
-  const { data: profiles } = await supabase
+  const { data: profiles } = await sb
     .from('profiles')
     .select('id, email, username')
     .in('id', friendIds);
@@ -58,10 +68,12 @@ router.get('/', async (req, res) => {
 
 // ─── GET /api/friends/requests — solicitudes pendientes ────────
 router.get('/requests', async (req, res) => {
-  const user = await getUser(req);
-  if (!user) return res.status(401).json({ error: 'No autorizado' });
+  const auth = await getAuth(req);
+  if (!auth) return res.status(401).json({ error: 'No autorizado' });
 
-  const { data, error } = await supabase
+  const { user, sb } = auth;
+
+  const { data, error } = await sb
     .from('friends')
     .select('id, requester_id, created_at')
     .eq('addressee_id', user.id)
@@ -71,7 +83,7 @@ router.get('/requests', async (req, res) => {
 
   // Traer emails + usernames de quienes solicitaron
   const requesterIds = data.map((r) => r.requester_id);
-  const { data: profiles } = await supabase
+  const { data: profiles } = await sb
     .from('profiles')
     .select('id, email, username')
     .in('id', requesterIds);
@@ -96,24 +108,29 @@ router.get('/requests', async (req, res) => {
 
 // ─── POST /api/friends/request — enviar solicitud ──────────────
 router.post('/request', async (req, res) => {
-  const user = await getUser(req);
-  if (!user) return res.status(401).json({ error: 'No autorizado' });
+  const auth = await getAuth(req);
+  if (!auth) return res.status(401).json({ error: 'No autorizado' });
 
-  const { friendEmail } = req.body;
-  if (!friendEmail) {
-    return res.status(400).json({ error: 'Email del amigo requerido' });
+  const { user, sb } = auth;
+  const { friendEmail, friendUsername } = req.body;
+
+  if (!friendEmail && !friendUsername) {
+    return res.status(400).json({
+      error: 'Email o nombre de usuario del amigo requerido',
+    });
   }
 
-  if (friendEmail === user.email) {
-    return res.status(400).json({ error: 'No podés agregarte a vos mismo' });
+  // Buscar perfil por email o username
+  let profileQuery = sb.from('profiles').select('id, email, username');
+
+  if (friendEmail) {
+    profileQuery = profileQuery.eq('email', friendEmail);
+  } else {
+    profileQuery = profileQuery.eq('username', friendUsername);
   }
 
-  // Buscar perfil por email
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('email', friendEmail)
-    .maybeSingle();
+  const { data: profile, error: profileError } =
+    await profileQuery.maybeSingle();
 
   if (profileError)
     return res.status(500).json({ error: profileError.message });
@@ -122,8 +139,13 @@ router.post('/request', async (req, res) => {
     return res.status(404).json({ error: 'Usuario no encontrado' });
   }
 
+  // No podés agregarte a vos mismo
+  if (profile.id === user.id) {
+    return res.status(400).json({ error: 'No podés agregarte a vos mismo' });
+  }
+
   // Verificar si ya son amigos o hay solicitud pendiente
-  const { data: existing } = await supabase
+  const { data: existing } = await sb
     .from('friends')
     .select('id, status')
     .or(
@@ -137,12 +159,13 @@ router.post('/request', async (req, res) => {
       return res.status(400).json({ error: 'Ya son amigos' });
     }
     if (existing.status === 'pending') {
+      const isMine = existing.id; // doesn't matter who sent it
       return res.status(400).json({ error: 'Ya hay una solicitud pendiente' });
     }
   }
 
   // Crear solicitud
-  const { error: insertError } = await supabase.from('friends').insert({
+  const { error: insertError } = await sb.from('friends').insert({
     requester_id: user.id,
     addressee_id: profile.id,
     status: 'pending',
@@ -157,17 +180,18 @@ router.post('/request', async (req, res) => {
 
 // ─── POST /api/friends/respond — aceptar/rechazar ──────────────
 router.post('/respond', async (req, res) => {
-  const user = await getUser(req);
-  if (!user) return res.status(401).json({ error: 'No autorizado' });
+  const auth = await getAuth(req);
+  if (!auth) return res.status(401).json({ error: 'No autorizado' });
 
-  const { requestId, action } = req.body; // action: 'accepted' | 'rejected'
+  const { user, sb } = auth;
+  const { requestId, action } = req.body;
 
   if (!['accepted', 'rejected'].includes(action)) {
     return res.status(400).json({ error: 'Acción inválida' });
   }
 
   // Verificar que la solicitud existe y soy el destinatario
-  const { data: request, error: reqError } = await supabase
+  const { data: request, error: reqError } = await sb
     .from('friends')
     .select('id, addressee_id')
     .eq('id', requestId)
@@ -178,7 +202,7 @@ router.post('/respond', async (req, res) => {
   if (reqError) return res.status(500).json({ error: reqError.message });
   if (!request) return res.status(404).json({ error: 'Solicitud no encontrada' });
 
-  const { error: updateError } = await supabase
+  const { error: updateError } = await sb
     .from('friends')
     .update({ status: action, updated_at: new Date().toISOString() })
     .eq('id', requestId);

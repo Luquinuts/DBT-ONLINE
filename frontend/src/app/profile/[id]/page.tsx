@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import SidebarLayout from '@/components/SidebarLayout';
 import { useAuth } from '@/lib/auth';
+import { supabase } from '@/lib/supabase';
 
 interface ProfileData {
   id: string;
@@ -32,8 +33,14 @@ export default function ProfilePage() {
     setFetchError(null);
 
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/profiles/${profileId}`
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/profiles/${profileId}`,
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        }
       );
 
       if (res.status === 404) {

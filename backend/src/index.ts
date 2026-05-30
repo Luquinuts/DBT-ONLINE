@@ -4,6 +4,7 @@ import { Server } from 'socket.io';
 import cors from 'cors';
 import { v4 as uuid } from 'uuid';
 import { supabase } from './db/client';
+import { getAuthClient } from './db/auth-client';
 import friendsRouter from './routes/friends';
 import type {
   ClientToServerEvents,
@@ -180,7 +181,13 @@ app.get('/api/me', async (req, res) => {
 app.get('/api/profiles/:id', async (req, res) => {
   const { id } = req.params;
 
-  const { data: profile, error } = await supabase
+  // Usar cliente autenticado si hay token, o caer al anon si no
+  const auth = req.headers.authorization;
+  const sb = auth?.startsWith('Bearer ')
+    ? getAuthClient(auth.slice(7))
+    : supabase;
+
+  const { data: profile, error } = await sb
     .from('profiles')
     .select('id, email, username, created_at')
     .eq('id', id)
@@ -190,7 +197,7 @@ app.get('/api/profiles/:id', async (req, res) => {
   if (!profile) return res.status(404).json({ error: 'Perfil no encontrado' });
 
   // Contar amigos aceptados
-  const { count } = await supabase
+  const { count } = await sb
     .from('friends')
     .select('id', { count: 'exact', head: true })
     .or(`requester_id.eq.${id},addressee_id.eq.${id}`)
