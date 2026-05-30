@@ -4,7 +4,17 @@ import { useState, useEffect } from 'react';
 import SidebarLayout from '@/components/SidebarLayout';
 import { useRoom } from '@/lib/useRoom';
 import { useProfile } from '@/lib/useProfile';
+import { getSocket } from '@/lib/socket';
 import type { Room, Player, RoomEvent } from '@dbt-online/shared';
+
+interface PublicRoom {
+  id: string;
+  code: string;
+  name: string;
+  playerCount: number;
+  maxPlayers: number;
+  hostUserId: string;
+}
 
 type View = 'home' | 'create' | 'join' | 'lobby';
 
@@ -33,6 +43,32 @@ export default function GamePage() {
       setPlayerName(profile.username);
     }
   }, [profile, playerName, setPlayerName]);
+
+  // ─── Salas públicas ──────────────────────────────────────────
+
+  const [publicRooms, setPublicRooms] = useState<PublicRoom[]>([]);
+  const [publicRoomsLoading, setPublicRoomsLoading] = useState(false);
+
+  useEffect(() => {
+    if (currentView !== 'home' || localView !== 'home') return;
+
+    const socket = getSocket();
+    if (!socket?.connected) return;
+
+    setPublicRoomsLoading(true);
+    socket.emit('room:public_listing');
+
+    const onList = (data: { rooms: PublicRoom[] }) => {
+      setPublicRooms(data.rooms);
+      setPublicRoomsLoading(false);
+    };
+
+    socket.on('room:public_list', onList);
+
+    return () => {
+      socket.off('room:public_list', onList);
+    };
+  }, [currentView, localView]);
 
   return (
     <SidebarLayout>
@@ -99,6 +135,15 @@ export default function GamePage() {
                     Unirse a Sala
                   </button>
                 </div>
+              )}
+
+              {/* ─── Salas Públicas ─────────────────── */}
+              {localView === 'home' && (
+                <PublicRoomsSection
+                  rooms={publicRooms}
+                  loading={publicRoomsLoading}
+                  onJoin={joinRoom}
+                />
               )}
 
               {localView === 'create' && (
@@ -310,6 +355,72 @@ function LobbyView({
       >
         ← Salir de la sala
       </button>
+    </div>
+  );
+}
+
+// ─── Salas Públicas ──────────────────────────────────────────
+
+function PublicRoomsSection({
+  rooms,
+  loading,
+  onJoin,
+}: {
+  rooms: PublicRoom[];
+  loading: boolean;
+  onJoin: (code: string) => void;
+}) {
+  if (loading) {
+    return (
+      <div className="border-t border-gray-800 pt-6">
+        <h3 className="mb-3 text-sm font-semibold text-gray-400 uppercase tracking-wide">
+          Salas Públicas
+        </h3>
+        <p className="text-sm text-gray-500">Cargando salas...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="border-t border-gray-800 pt-6">
+      <h3 className="mb-3 text-sm font-semibold text-gray-400 uppercase tracking-wide">
+        Salas Públicas
+      </h3>
+      {rooms.length === 0 ? (
+        <p className="text-sm text-gray-500">
+          No hay salas públicas disponibles
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {rooms.map((room) => (
+            <div
+              key={room.id}
+              className="flex items-center justify-between rounded-lg border border-gray-700 bg-gray-800/50 px-4 py-3"
+            >
+              <div className="min-w-0 text-left">
+                <p className="truncate font-medium text-white">
+                  {room.name}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {room.playerCount}/{room.maxPlayers} jugadores
+                  <span className="ml-2 text-gray-500">
+                    · Código: {room.code}
+                  </span>
+                </p>
+              </div>
+              <button
+                onClick={() => onJoin(room.code)}
+                disabled={room.playerCount >= room.maxPlayers}
+                className="shrink-0 rounded-lg bg-[#e94560] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#d63850] disabled:opacity-50"
+              >
+                {room.playerCount >= room.maxPlayers
+                  ? 'Llena'
+                  : 'Unirse'}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -30,21 +30,25 @@ router.get('/', async (req, res) => {
     f.requester_id === user.id ? f.addressee_id : f.requester_id
   );
 
-  // Traer emails de los perfiles
+  // Traer emails + usernames de los perfiles
   const { data: profiles } = await supabase
     .from('profiles')
-    .select('id, email')
+    .select('id, email, username')
     .in('id', friendIds);
 
-  const profileMap = new Map((profiles || []).map((p) => [p.id, p.email]));
+  const profileMap = new Map(
+    (profiles || []).map((p) => [p.id, { email: p.email, username: p.username }])
+  );
 
   const friends = data.map((f) => {
     const friendId =
       f.requester_id === user.id ? f.addressee_id : f.requester_id;
+    const profile = profileMap.get(friendId);
     return {
       id: f.id,
       friendId,
-      email: profileMap.get(friendId) ?? 'Desconocido',
+      email: profile?.email ?? 'Desconocido',
+      username: profile?.username ?? undefined,
       since: f.created_at,
     };
   });
@@ -65,21 +69,27 @@ router.get('/requests', async (req, res) => {
 
   if (error) return res.status(500).json({ error: error.message });
 
-  // Traer emails de quienes solicitaron
+  // Traer emails + usernames de quienes solicitaron
   const requesterIds = data.map((r) => r.requester_id);
   const { data: profiles } = await supabase
     .from('profiles')
-    .select('id, email')
+    .select('id, email, username')
     .in('id', requesterIds);
 
-  const profileMap = new Map((profiles || []).map((p) => [p.id, p.email]));
+  const profileMap = new Map(
+    (profiles || []).map((p) => [p.id, { email: p.email, username: p.username }])
+  );
 
-  const requests = data.map((r) => ({
-    id: r.id,
-    requesterId: r.requester_id,
-    email: profileMap.get(r.requester_id) ?? 'Desconocido',
-    since: r.created_at,
-  }));
+  const requests = data.map((r) => {
+    const profile = profileMap.get(r.requester_id);
+    return {
+      id: r.id,
+      requesterId: r.requester_id,
+      email: profile?.email ?? 'Desconocido',
+      username: profile?.username ?? undefined,
+      since: r.created_at,
+    };
+  });
 
   res.json({ requests });
 });

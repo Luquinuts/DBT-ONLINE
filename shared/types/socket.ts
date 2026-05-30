@@ -1,5 +1,6 @@
 import type { Room, Player, RoomEvent } from './room';
 import type { GameState, GameAction, ActionResult } from './game';
+import type { UserPresence } from './profile';
 
 // ─── Eventos Cliente → Servidor ────────────────────────────────
 
@@ -37,6 +38,9 @@ export interface ServerToClientEvents {
       hostUserId: string;
     }>;
   }) => void;
+
+  // Presencia
+  'presence:friends': (data: { presences: UserPresence[] }) => void;
 
   // Juego
   'game:state': (data: GameState) => void;

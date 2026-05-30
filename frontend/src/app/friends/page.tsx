@@ -1,14 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import SidebarLayout from '@/components/SidebarLayout';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
+import { connect } from '@/lib/socket';
+import type { UserPresence } from '@dbt-online/shared';
 
 interface Friend {
   id: string;
   friendId: string;
   email: string;
+  username?: string;
   since: string;
 }
 
@@ -16,6 +20,7 @@ interface FriendRequest {
   id: string;
   requesterId: string;
   email: string;
+  username?: string;
   since: string;
 }
 
@@ -27,6 +32,37 @@ export default function FriendsPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [presences, setPresences] = useState<Map<string, UserPresence>>(
+    new Map()
+  );
+
+  // ─── Socket: presencia ──────────────────────────────────────────
+
+  useEffect(() => {
+    const socket = connect();
+
+    const onPresence = (data: { presences: UserPresence[] }) => {
+      const map = new Map<string, UserPresence>();
+      for (const p of data.presences) {
+        map.set(p.userId, p);
+      }
+      setPresences(map);
+    };
+
+    const onDisconnect = () => {
+      setPresences(new Map());
+    };
+
+    socket.on('presence:friends', onPresence);
+    socket.on('disconnect', onDisconnect);
+
+    return () => {
+      socket.off('presence:friends', onPresence);
+      socket.off('disconnect', onDisconnect);
+    };
+  }, []);
+
+  // ─── REST: amigos y solicitudes ────────────────────────────────
 
   async function getToken(): Promise<string | null> {
     const { data } = await supabase.auth.getSession();
@@ -116,6 +152,10 @@ export default function FriendsPage() {
     loadData();
   }
 
+  function joinFriend(code: string) {
+    window.location.href = '/';
+  }
+
   return (
     <SidebarLayout>
       <div className="flex flex-1 flex-col p-4 pb-20 md:pb-4">
@@ -159,7 +199,9 @@ export default function FriendsPage() {
                     key={r.id}
                     className="flex items-center justify-between rounded-lg border border-gray-700 bg-gray-800/50 px-4 py-3"
                   >
-                    <span className="text-white">{r.email}</span>
+                    <span className="text-white">
+                      {r.username || r.email}
+                    </span>
                     <div className="flex gap-2">
                       <button
                         onClick={() => respondToRequest(r.id, 'accepted')}
@@ -193,17 +235,67 @@ export default function FriendsPage() {
               </p>
             ) : (
               <div className="space-y-2">
-                {friends.map((f) => (
-                  <div
-                    key={f.id}
-                    className="flex items-center justify-between rounded-lg border border-gray-700 bg-gray-800/50 px-4 py-3"
-                  >
-                    <span className="text-white">{f.email}</span>
-                    <span className="text-xs text-gray-500">
-                      {new Date(f.since).toLocaleDateString()}
-                    </span>
-                  </div>
-                ))}
+                {friends.map((f) => {
+                  const presence = presences.get(f.friendId);
+                  const isOnline =
+                    presence?.status === 'online' ||
+                    presence?.status === 'in_game';
+
+                  return (
+                    <div
+                      key={f.id}
+                      className="flex items-center justify-between rounded-lg border border-gray-700 bg-gray-800/50 px-4 py-3"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span
+                          className={`h-2.5 w-2.5 shrink-0 rounded-full ${
+                            isOnline ? 'bg-green-500' : 'bg-gray-600'
+                          }`}
+                        />
+                        <div className="min-w-0">
+                          <Link
+                            href={`/profile/${f.friendId}`}
+                            className="block truncate font-medium text-white hover:text-[#e94560] transition-colors"
+                          >
+                            {f.username || f.email}
+                          </Link>
+                          {isOnline && (
+                            <p className="truncate text-xs text-gray-400">
+                              {presence?.status === 'in_game'
+                                ? 'En una partida'
+                                : presence?.roomName
+                                  ? `En sala: ${presence.roomName}`
+                                  : 'En línea'}
+                              {presence?.roomCode && (
+                                <span className="ml-1 text-gray-500">
+                                  · Código: {presence.roomCode}
+                                </span>
+                              )}
+                            </p>
+                          )}
+                          {!isOnline && (
+                            <p className="text-xs text-gray-500">
+                              Desconectado
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {isOnline && presence?.roomCode && (
+                          <button
+                            onClick={() => joinFriend(presence.roomCode!)}
+                            className="rounded-lg bg-[#e94560] px-3 py-1 text-xs font-semibold text-white hover:bg-[#d63850] transition-colors"
+                          >
+                            Unirse
+                          </button>
+                        )}
+                        <span className="text-xs text-gray-500">
+                          {new Date(f.since).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

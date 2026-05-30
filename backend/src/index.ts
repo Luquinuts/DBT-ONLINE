@@ -12,6 +12,7 @@ import type {
   SocketData,
   Room,
   Player,
+  UserPresence,
 } from '@dbt-online/shared';
 
 // ─── App ───────────────────────────────────────────────────────
@@ -75,6 +76,82 @@ function generateCode(): string {
   return code;
 }
 
+// ─── Presencia en tiempo real ──────────────────────────────────
+
+interface PresenceEntry {
+  status: 'online' | 'in_game';
+  roomId?: string;
+  roomCode?: string;
+  roomName?: string;
+  socketId: string;
+}
+
+/** Mapa efímero: supabaseUserId → presencia (solo usuarios autenticados) */
+const presenceMap = new Map<string, PresenceEntry>();
+
+/** Obtiene los IDs de los amigos aceptados de un usuario */
+async function getFriendIds(userId: string): Promise<string[]> {
+  const { data } = await supabase
+    .from('friends')
+    .select('requester_id, addressee_id')
+    .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`)
+    .eq('status', 'accepted');
+
+  if (!data) return [];
+
+  return data.map((f) =>
+    f.requester_id === userId ? f.addressee_id : f.requester_id
+  );
+}
+
+/** Emite `presence:friends` a un usuario específico con la lista
+ *  de todos sus amigos que están actualmente online. */
+async function emitPresenceToUser(targetUserId: string) {
+  const friendIds = await getFriendIds(targetUserId);
+  const onlineFriendIds = friendIds.filter((id) => presenceMap.has(id));
+  if (onlineFriendIds.length === 0) return;
+
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('id, username')
+    .in('id', onlineFriendIds);
+
+  const usernameMap = new Map(
+    (profiles || []).map((p) => [p.id, p.username])
+  );
+
+  const presences: UserPresence[] = onlineFriendIds.map((id) => {
+    const entry = presenceMap.get(id)!;
+    return {
+      userId: id,
+      username: usernameMap.get(id) ?? undefined,
+      status: entry.status,
+      roomCode: entry.roomCode,
+      roomName: entry.roomName,
+    };
+  });
+
+  const entry = presenceMap.get(targetUserId);
+  if (!entry) return;
+
+  const socket = io.sockets.sockets.get(entry.socketId);
+  if (socket) {
+    socket.emit('presence:friends', { presences });
+  }
+}
+
+/** Notifica a todos los amigos online de `userId` que su presencia cambió. */
+async function broadcastPresenceChange(userId: string) {
+  const friendIds = await getFriendIds(userId);
+  if (friendIds.length === 0) return;
+
+  for (const friendId of friendIds) {
+    if (presenceMap.has(friendId)) {
+      await emitPresenceToUser(friendId);
+    }
+  }
+}
+
 // ─── Health check ──────────────────────────────────────────────
 
 app.get('/health', (_req, res) => {
@@ -98,11 +175,54 @@ app.get('/api/me', async (req, res) => {
   res.json({ user: data.user });
 });
 
+// ─── GET /api/profiles/:id — perfil público ───────────────────
+
+app.get('/api/profiles/:id', async (req, res) => {
+  const { id } = req.params;
+
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('id, email, username, created_at')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (error) return res.status(500).json({ error: error.message });
+  if (!profile) return res.status(404).json({ error: 'Perfil no encontrado' });
+
+  // Contar amigos aceptados
+  const { count } = await supabase
+    .from('friends')
+    .select('id', { count: 'exact', head: true })
+    .or(`requester_id.eq.${id},addressee_id.eq.${id}`)
+    .eq('status', 'accepted');
+
+  res.json({
+    id: profile.id,
+    email: profile.email,
+    username: profile.username,
+    createdAt: profile.created_at,
+    friendCount: count ?? 0,
+  });
+});
+
 // ─── Socket.IO ─────────────────────────────────────────────────
 
-io.on('connection', (socket) => {
+io.on('connection', async (socket) => {
   const userId = socket.data.supabaseUserId;
   console.log(`[connect] ${socket.id}${userId ? ` (user:${userId.slice(0,8)})` : ''}`);
+
+  // ── Presencia: registrar y notificar amigos ────────────────
+  if (userId) {
+    presenceMap.set(userId, {
+      status: 'online',
+      socketId: socket.id,
+    });
+    try {
+      await broadcastPresenceChange(userId);
+    } catch (err) {
+      console.error('[presence] error al conectar:', err);
+    }
+  }
 
   // ── Crear sala ─────────────────────────────────────────────
   socket.on('room:create', ({ name, maxPlayers, isPublic = true }) => {
@@ -127,6 +247,20 @@ io.on('connection', (socket) => {
     console.log(`[room:create] ${room.id} (${code}) público:${isPublic}`);
 
     io.to(room.id).emit('room:updated', { room });
+
+    // Presencia: actualizar estado si es usuario autenticado
+    if (userId) {
+      const entry = presenceMap.get(userId);
+      if (entry) {
+        entry.status = 'in_game';
+        entry.roomId = room.id;
+        entry.roomCode = room.code;
+        entry.roomName = room.name;
+        broadcastPresenceChange(userId).catch((err) =>
+          console.error('[presence] error en room:create:', err)
+        );
+      }
+    }
   });
 
   // ── Unirse a sala ──────────────────────────────────────────
@@ -166,6 +300,20 @@ io.on('connection', (socket) => {
       type: 'player_joined',
       player,
     });
+
+    // Presencia: actualizar estado si es usuario autenticado
+    if (userId) {
+      const entry = presenceMap.get(userId);
+      if (entry) {
+        entry.status = 'in_game';
+        entry.roomId = room.id;
+        entry.roomCode = room.code;
+        entry.roomName = room.name;
+        broadcastPresenceChange(userId).catch((err) =>
+          console.error('[presence] error en room:join:', err)
+        );
+      }
+    }
   });
 
   // ── Listar salas públicas ──────────────────────────────────
@@ -185,10 +333,47 @@ io.on('connection', (socket) => {
   });
 
   // ── Salir de sala ──────────────────────────────────────────
-  socket.on('room:leave', () => handleLeave(socket));
+  socket.on('room:leave', () => {
+    handleLeave(socket);
+
+    // Presencia: volver a online sin sala
+    if (userId) {
+      const entry = presenceMap.get(userId);
+      if (entry) {
+        entry.status = 'online';
+        entry.roomId = undefined;
+        entry.roomCode = undefined;
+        entry.roomName = undefined;
+        broadcastPresenceChange(userId).catch((err) =>
+          console.error('[presence] error en room:leave:', err)
+        );
+      }
+    }
+  });
+
   socket.on('disconnect', () => {
     console.log(`[disconnect] ${socket.id}`);
     handleLeave(socket);
+
+    // Presencia: remover y notificar amigos
+    if (userId) {
+      // Guardar friends antes de borrar la entrada
+      getFriendIds(userId)
+        .then((friendIds) => {
+          presenceMap.delete(userId);
+          // Notificar a cada amigo online
+          for (const friendId of friendIds) {
+            if (presenceMap.has(friendId)) {
+              emitPresenceToUser(friendId).catch((err) =>
+                console.error('[presence] error en disconnect:', err)
+              );
+            }
+          }
+        })
+        .catch((err) =>
+          console.error('[presence] error obteniendo friends en disconnect:', err)
+        );
+    }
   });
 
   function handleLeave(socket: any) {
