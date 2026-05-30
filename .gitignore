@@ -6,6 +6,13 @@ node_modules/
 dist/
 build/
 .turbo/
+*.tsbuildinfo
+
+# Shared — only source .ts files, no compiled output
+shared/types/*.js
+shared/types/*.d.ts
+shared/types/*.js.map
+shared/types/*.d.ts.map
 
 # Environment
 .env
@@ -32,3 +39,6 @@ yarn-error.log*
 
 # Supabase
 supabase/.temp
+
+# OpenCode / Engram local state
+.atl/
