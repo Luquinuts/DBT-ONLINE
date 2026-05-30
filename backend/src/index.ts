@@ -17,6 +17,11 @@ import type {
 const app = express();
 const httpServer = createServer(app);
 
+// Permitir múltiples orígenes separados por coma
+const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
+  .split(',')
+  .map((s) => s.trim());
+
 const io = new Server<
   ClientToServerEvents,
   ServerToClientEvents,
@@ -24,7 +29,7 @@ const io = new Server<
   SocketData
 >(httpServer, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: allowedOrigins,
     methods: ['GET', 'POST'],
   },
 });
