@@ -88,7 +88,11 @@ export function useRoom() {
   const createRoom = useCallback(
     (name: string, isPublic = true) => {
       const socket = getSocket();
-      if (!socket.connected) return;
+      console.log('[room] createRoom called', { name, isPublic, connected: socket?.connected, playerName: stateRef.current.playerName });
+      if (!socket.connected) {
+        console.warn('[room] socket not connected, skipping emit');
+        return;
+      }
       socket.emit('room:create', {
         name,
         playerName: stateRef.current.playerName,
