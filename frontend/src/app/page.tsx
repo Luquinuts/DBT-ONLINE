@@ -1,12 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
+import { useAuth } from '@/lib/auth';
 import { useRoom } from '@/lib/useRoom';
 import type { Room, Player, RoomEvent } from '@dbt-online/shared';
 
 type View = 'home' | 'create' | 'join' | 'lobby';
 
 export default function Home() {
+  const { user, loading: authLoading, logout } = useAuth();
   const {
     view,
     room,
@@ -23,105 +26,157 @@ export default function Home() {
   } = useRoom();
 
   const [localView, setLocalView] = useState<View>('home');
-
-  // Sincronizar vista local con el estado del hook
   const currentView = room ? 'lobby' : localView;
 
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-8 text-center">
-        {/* Header */}
-        <div>
-          <h1 className="text-5xl font-bold tracking-tight text-white">
-            DBT Online
-          </h1>
-          <p className="mt-2 text-gray-400">
+  // ── Cargando auth ────────────────────────────────────────
+  if (authLoading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center">
+        <p className="text-gray-400">Cargando...</p>
+      </main>
+    );
+  }
+
+  // ── No autenticado ───────────────────────────────────────
+  if (!user) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center p-4">
+        <div className="w-full max-w-sm text-center space-y-6">
+          <h1 className="text-5xl font-bold text-white">DBT Online</h1>
+          <p className="text-gray-400">
             Juego de cartas por turnos con amigos
           </p>
-        </div>
-
-        {/* Estado de conexión */}
-        {!connected && (
-          <p className="text-sm text-yellow-400">
-            Conectando al servidor...
-          </p>
-        )}
-
-        {/* Error */}
-        {error && (
-          <div className="rounded-lg border border-red-500/50 bg-red-500/10 px-4 py-2 text-sm text-red-400">
-            {error}
-            <button
-              onClick={clearError}
-              className="ml-2 text-red-300 hover:text-white"
+          <div className="space-y-3">
+            <Link
+              href="/login"
+              className="block w-full rounded-lg bg-[#e94560] px-6 py-3 font-semibold text-white hover:bg-[#d63850]"
             >
-              ✕
-            </button>
+              Iniciar sesión
+            </Link>
+            <Link
+              href="/register"
+              className="block w-full rounded-lg border border-gray-600 px-6 py-3 font-semibold text-white hover:bg-gray-800"
+            >
+              Crear cuenta
+            </Link>
           </div>
-        )}
+        </div>
+      </main>
+    );
+  }
 
-        {/* ─── LOBBY ─────────────────────────── */}
-        {currentView === 'lobby' && room && player && (
-          <LobbyView
-            room={room}
-            player={player}
-            events={events}
-            onLeave={leaveRoom}
-          />
-        )}
+  // ── Autenticado — juego ──────────────────────────────────
+  return (
+    <main className="flex min-h-screen flex-col p-4">
+      {/* Header */}
+      <header className="mx-auto flex w-full max-w-md items-center justify-between">
+        <h1 className="text-xl font-bold text-white">DBT Online</h1>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/friends"
+            className="text-sm text-gray-400 hover:text-white"
+          >
+            Amigos
+          </Link>
+          <span className="text-sm text-gray-500">{user.email}</span>
+          <button
+            onClick={logout}
+            className="text-sm text-gray-500 hover:text-[#e94560]"
+          >
+            Salir
+          </button>
+        </div>
+      </header>
 
-        {/* ─── HOME ──────────────────────────── */}
-        {currentView === 'home' && (
-          <div className="space-y-6">
-            {/* Nombre de jugador */}
-            <div>
-              <label className="mb-1 block text-left text-sm text-gray-400">
-                Tu nombre
-              </label>
-              <input
-                type="text"
-                placeholder="Ej: Luquinuts"
-                value={playerName}
-                onChange={(e) => setPlayerName(e.target.value)}
-                maxLength={20}
-                className="w-full rounded-lg border border-gray-600 bg-transparent px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#e94560]"
-              />
+      {/* Contenido */}
+      <div className="flex flex-1 flex-col items-center justify-center">
+        <div className="w-full max-w-md space-y-8 text-center">
+          {/* Conexión */}
+          {!connected && (
+            <p className="text-sm text-yellow-400">
+              Conectando al servidor...
+            </p>
+          )}
+
+          {/* Error */}
+          {error && (
+            <div className="rounded-lg border border-red-500/50 bg-red-500/10 px-4 py-2 text-sm text-red-400">
+              {error}
+              <button
+                onClick={clearError}
+                className="ml-2 text-red-300 hover:text-white"
+              >
+                ✕
+              </button>
             </div>
+          )}
 
-            {localView === 'home' && (
-              <div className="space-y-3">
-                <button
-                  onClick={() => setLocalView('create')}
-                  disabled={!playerName.trim() || !connected}
-                  className="w-full rounded-lg bg-[#e94560] px-6 py-3 font-semibold text-white transition hover:bg-[#d63850] disabled:opacity-50"
-                >
-                  Crear Sala
-                </button>
-                <button
-                  onClick={() => setLocalView('join')}
-                  disabled={!playerName.trim() || !connected}
-                  className="w-full rounded-lg border border-gray-600 px-6 py-3 font-semibold text-white transition hover:bg-gray-800 disabled:opacity-50"
-                >
-                  Unirse a Sala
-                </button>
+          {/* ─── LOBBY ─────────────────────────── */}
+          {currentView === 'lobby' && room && player && (
+            <LobbyView
+              room={room}
+              player={player}
+              events={events}
+              onLeave={leaveRoom}
+            />
+          )}
+
+          {/* ─── HOME ──────────────────────────── */}
+          {currentView === 'home' && (
+            <div className="space-y-6">
+              <p className="text-gray-400">
+                Jugá al truco con amigos en salas 1vs1
+              </p>
+
+              <div>
+                <label className="mb-1 block text-left text-sm text-gray-400">
+                  Tu nombre en el juego
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ej: Luquinuts"
+                  value={playerName}
+                  onChange={(e) => setPlayerName(e.target.value)}
+                  maxLength={20}
+                  className="w-full rounded-lg border border-gray-600 bg-transparent px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#e94560]"
+                />
               </div>
-            )}
 
-            {localView === 'create' && (
-              <CreateView
-                onBack={() => setLocalView('home')}
-                onCreate={(name) => createRoom(name)}
-              />
-            )}
+              {localView === 'home' && (
+                <div className="space-y-3">
+                  <button
+                    onClick={() => setLocalView('create')}
+                    disabled={!playerName.trim() || !connected}
+                    className="w-full rounded-lg bg-[#e94560] px-6 py-3 font-semibold text-white transition hover:bg-[#d63850] disabled:opacity-50"
+                  >
+                    Crear Sala
+                  </button>
+                  <button
+                    onClick={() => setLocalView('join')}
+                    disabled={!playerName.trim() || !connected}
+                    className="w-full rounded-lg border border-gray-600 px-6 py-3 font-semibold text-white transition hover:bg-gray-800 disabled:opacity-50"
+                  >
+                    Unirse a Sala
+                  </button>
+                </div>
+              )}
 
-            {localView === 'join' && (
-              <JoinView
-                onBack={() => setLocalView('home')}
-                onJoin={(code) => joinRoom(code)}
-              />
-            )}
-          </div>
-        )}
+              {localView === 'create' && (
+                <CreateView
+                  onBack={() => setLocalView('home')}
+                  onCreate={(name) => createRoom(name)}
+                />
+              )}
+
+              {localView === 'join' && (
+                <JoinView
+                  onBack={() => setLocalView('home')}
+                  onJoin={(code) => joinRoom(code)}
+                />
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </main>
   );
@@ -224,7 +279,6 @@ function LobbyView({
 
   return (
     <div className="space-y-6">
-      {/* Código de sala */}
       <div>
         <p className="mb-1 text-sm text-gray-400">Código de sala</p>
         <p className="select-all text-4xl font-bold tracking-[0.3em] text-[#e94560]">
@@ -235,10 +289,8 @@ function LobbyView({
         </p>
       </div>
 
-      {/* Nombre de sala */}
       <p className="text-lg font-medium">{room.name}</p>
 
-      {/* Lista de jugadores */}
       <div className="rounded-lg border border-gray-700 bg-gray-800/50 p-4">
         <h3 className="mb-3 text-left text-sm font-semibold text-gray-400 uppercase tracking-wide">
           Jugadores ({playerCount}/{room.maxPlayers})
@@ -263,7 +315,6 @@ function LobbyView({
         </ul>
       </div>
 
-      {/* Estado */}
       {isHost && playerCount >= 2 ? (
         <button className="w-full rounded-lg bg-green-600 px-6 py-3 font-semibold text-white transition hover:bg-green-500">
           Iniciar Partida
@@ -276,7 +327,6 @@ function LobbyView({
         </p>
       )}
 
-      {/* Último evento */}
       {lastEvent?.type === 'player_joined' && (
         <p className="text-sm text-green-400">
           {lastEvent.player.name} se unió a la sala
@@ -288,7 +338,6 @@ function LobbyView({
         </p>
       )}
 
-      {/* Salir */}
       <button
         onClick={onLeave}
         className="text-sm text-gray-500 hover:text-white"

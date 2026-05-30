@@ -5,10 +5,15 @@ import type { GameState, GameAction, ActionResult } from './game';
 
 export interface ClientToServerEvents {
   // Sala
-  'room:create': (data: { name: string; maxPlayers: number }) => void;
+  'room:create': (data: {
+    name: string;
+    maxPlayers?: number;
+    isPublic?: boolean;
+  }) => void;
   'room:join': (data: { code: string; playerName: string }) => void;
   'room:leave': () => void;
   'room:start_game': () => void;
+  'room:public_listing': () => void;
 
   // Juego
   'game:action': (data: GameAction) => void;
@@ -22,6 +27,16 @@ export interface ServerToClientEvents {
   'room:updated': (data: { room: Room }) => void;
   'room:event': (data: RoomEvent) => void;
   'room:error': (data: { message: string }) => void;
+  'room:public_list': (data: {
+    rooms: Array<{
+      id: string;
+      code: string;
+      name: string;
+      playerCount: number;
+      maxPlayers: number;
+      hostUserId: string;
+    }>;
+  }) => void;
 
   // Juego
   'game:state': (data: GameState) => void;
@@ -37,4 +52,5 @@ export interface InterServerEvents {
 export interface SocketData {
   playerId: string;
   roomId?: string;
+  supabaseUserId?: string;
 }

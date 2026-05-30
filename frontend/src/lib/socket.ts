@@ -10,12 +10,25 @@ const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
 
 let socket: Socket<ServerToClientEvents, ClientToServerEvents> | null = null;
+let authToken: string | null = null;
+
+export function setAuthToken(token: string | null) {
+  authToken = token;
+  if (socket) {
+    socket.auth = { token };
+    if (socket.connected) {
+      socket.disconnect();
+      socket.connect();
+    }
+  }
+}
 
 export function getSocket() {
   if (!socket) {
     socket = io(BACKEND_URL, {
       autoConnect: false,
       transports: ['websocket', 'polling'],
+      auth: { token: authToken },
     });
   }
   return socket;

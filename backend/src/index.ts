@@ -3,6 +3,8 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import { v4 as uuid } from 'uuid';
+import { supabase } from './db/client';
+import friendsRouter from './routes/friends';
 import type {
   ClientToServerEvents,
   ServerToClientEvents,
@@ -17,7 +19,6 @@ import type {
 const app = express();
 const httpServer = createServer(app);
 
-// Permitir múltiples orígenes separados por coma
 const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
   .split(',')
   .map((s) => s.trim());
@@ -28,19 +29,39 @@ const io = new Server<
   InterServerEvents,
   SocketData
 >(httpServer, {
-  cors: {
-    origin: allowedOrigins,
-    methods: ['GET', 'POST'],
-  },
+  cors: { origin: allowedOrigins, methods: ['GET', 'POST'] },
 });
 
 app.use(cors());
 app.use(express.json());
 
+// ─── Auth middleware (Socket.IO) ────────────────────────────────
+
+io.use(async (socket, next) => {
+  const token = socket.handshake.auth?.token;
+
+  if (!token) {
+    // Conexión sin auth — permitimos pero no vinculamos usuario
+    socket.data.supabaseUserId = undefined;
+    return next();
+  }
+
+  const { data, error } = await supabase.auth.getUser(token);
+
+  if (error || !data.user) {
+    return next(new Error('Token inválido'));
+  }
+
+  socket.data.supabaseUserId = data.user.id;
+  next();
+});
+
 // ─── Estado en memoria ─────────────────────────────────────────
 
-interface RoomStore extends Room {
-  // Acá va el estado del juego cuando lo implementemos
+interface RoomStore extends Omit<Room, 'maxPlayers'> {
+  maxPlayers: 2;
+  hostUserId: string; // Supabase user ID del host
+  isPublic: boolean;
 }
 
 const rooms = new Map<string, RoomStore>();
@@ -60,13 +81,31 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok', rooms: rooms.size });
 });
 
+// ─── Rutas REST ─────────────────────────────────────────────────
+
+app.use('/api/friends', friendsRouter);
+
+// Auth check básico
+app.get('/api/me', async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Token requerido' });
+  }
+
+  const { data, error } = await supabase.auth.getUser(authHeader.slice(7));
+  if (error) return res.status(401).json({ error: error.message });
+
+  res.json({ user: data.user });
+});
+
 // ─── Socket.IO ─────────────────────────────────────────────────
 
 io.on('connection', (socket) => {
-  console.log(`[connect] ${socket.id}`);
+  const userId = socket.data.supabaseUserId;
+  console.log(`[connect] ${socket.id}${userId ? ` (user:${userId.slice(0,8)})` : ''}`);
 
   // ── Crear sala ─────────────────────────────────────────────
-  socket.on('room:create', ({ name, maxPlayers }) => {
+  socket.on('room:create', ({ name, maxPlayers, isPublic = true }) => {
     const code = generateCode();
     const room: RoomStore = {
       id: uuid(),
@@ -74,7 +113,9 @@ io.on('connection', (socket) => {
       name,
       status: 'waiting',
       players: [],
-      maxPlayers: maxPlayers || 4,
+      maxPlayers: 2,
+      hostUserId: userId ?? socket.id,
+      isPublic,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -83,9 +124,8 @@ io.on('connection', (socket) => {
     socket.data.roomId = room.id;
 
     socket.join(room.id);
-    console.log(`[room:create] ${room.id} (${code})`);
+    console.log(`[room:create] ${room.id} (${code}) público:${isPublic}`);
 
-    // Enviar sala actualizada
     io.to(room.id).emit('room:updated', { room });
   });
 
@@ -128,11 +168,24 @@ io.on('connection', (socket) => {
     });
   });
 
-  // ── Salir de sala ──────────────────────────────────────────
-  socket.on('room:leave', () => {
-    handleLeave(socket);
+  // ── Listar salas públicas ──────────────────────────────────
+  socket.on('room:public_listing', () => {
+    const publicRooms = Array.from(rooms.values())
+      .filter((r) => r.isPublic && r.status === 'waiting')
+      .map((r) => ({
+        id: r.id,
+        code: r.code,
+        name: r.name,
+        playerCount: r.players.length,
+        maxPlayers: r.maxPlayers,
+        hostUserId: r.hostUserId,
+      }));
+
+    socket.emit('room:public_list', { rooms: publicRooms });
   });
 
+  // ── Salir de sala ──────────────────────────────────────────
+  socket.on('room:leave', () => handleLeave(socket));
   socket.on('disconnect', () => {
     console.log(`[disconnect] ${socket.id}`);
     handleLeave(socket);
@@ -151,14 +204,12 @@ io.on('connection', (socket) => {
     const [player] = room.players.splice(idx, 1);
     room.updatedAt = new Date().toISOString();
 
-    // Si no quedan jugadores, eliminar la sala
     if (room.players.length === 0) {
       rooms.delete(roomId);
       console.log(`[room:close] ${roomId}`);
       return;
     }
 
-    // Asignar nuevo host si se fue el actual
     if (player.isHost && room.players.length > 0) {
       room.players[0].isHost = true;
     }

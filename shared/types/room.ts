@@ -16,6 +16,7 @@ export interface Room {
   status: RoomStatus;
   players: Player[];
   maxPlayers: number;
+  isPublic: boolean;
   createdAt: string;
   updatedAt: string;
 }
