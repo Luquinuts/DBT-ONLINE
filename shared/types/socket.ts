@@ -1,0 +1,40 @@
+import type { Room, Player, RoomEvent } from './room';
+import type { GameState, GameAction, ActionResult } from './game';
+
+// ─── Eventos Cliente → Servidor ────────────────────────────────
+
+export interface ClientToServerEvents {
+  // Sala
+  'room:create': (data: { name: string; maxPlayers: number }) => void;
+  'room:join': (data: { code: string; playerName: string }) => void;
+  'room:leave': () => void;
+  'room:start_game': () => void;
+
+  // Juego
+  'game:action': (data: GameAction) => void;
+}
+
+// ─── Eventos Servidor → Cliente ────────────────────────────────
+
+export interface ServerToClientEvents {
+  // Sala
+  'room:joined': (data: { room: Room; player: Player }) => void;
+  'room:updated': (data: { room: Room }) => void;
+  'room:event': (data: RoomEvent) => void;
+  'room:error': (data: { message: string }) => void;
+
+  // Juego
+  'game:state': (data: GameState) => void;
+  'game:action_result': (data: ActionResult) => void;
+}
+
+// ─── Eventos Internos (sin cliente) ────────────────────────────
+
+export interface InterServerEvents {
+  ping: () => void;
+}
+
+export interface SocketData {
+  playerId: string;
+  roomId?: string;
+}
