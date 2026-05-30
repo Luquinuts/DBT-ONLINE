@@ -35,7 +35,7 @@ export default function GamePage() {
   } = useRoom();
 
   const [localView, setLocalView] = useState<View>('home');
-  const currentView = room ? 'lobby' : localView;
+  const inLobby = room !== null;
 
   // Sincronizar username del perfil
   useEffect(() => {
@@ -50,7 +50,7 @@ export default function GamePage() {
   const [publicRoomsLoading, setPublicRoomsLoading] = useState(false);
 
   useEffect(() => {
-    if (currentView !== 'home' || localView !== 'home') return;
+    if (inLobby || localView !== 'home') return;
 
     const socket = getSocket();
     if (!socket?.connected) return;
@@ -68,7 +68,7 @@ export default function GamePage() {
     return () => {
       socket.off('room:public_list', onList);
     };
-  }, [currentView, localView]);
+  }, [inLobby, localView]);
 
   return (
     <SidebarLayout>
@@ -95,7 +95,7 @@ export default function GamePage() {
           )}
 
           {/* ─── LOBBY ─────────────────────────── */}
-          {currentView === 'lobby' && room && player && (
+          {inLobby && room && player && (
             <LobbyView
               room={room}
               player={player}
@@ -105,7 +105,7 @@ export default function GamePage() {
           )}
 
           {/* ─── HOME ──────────────────────────── */}
-          {currentView === 'home' && (
+          {!inLobby && (
             <div className="space-y-6">
               <div>
                 <h2 className="text-2xl font-bold text-white">
