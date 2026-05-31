@@ -117,9 +117,18 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
         return { isEligible: false, canTarget: true };
       }
 
+      // Opponent side: selectable as card target in WAITING_FOR_ACTION
+      if (
+        phase === 'WAITING_FOR_ACTION' &&
+        selectedCard !== null &&
+        character.isAlive
+      ) {
+        return { isEligible: false, canTarget: true };
+      }
+
       return { isEligible: false, canTarget: false };
     },
-    [phase, isMyTurn, currentPlayer, opponent, selectedCharacter],
+    [phase, isMyTurn, currentPlayer, opponent, selectedCharacter, selectedCard],
   );
 
   const playerEligibilityMap = useMemo(() => {
@@ -189,13 +198,22 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
         return;
       }
 
-      // Opponent side: only target in ATTACK phase with an attacker selected
+      // Opponent side: target in ATTACK phase with an attacker selected
       if (phase === 'ATTACK' && selectedCharacter) {
         actions.attack(selectedCharacter, characterId, 'NORMAL');
         actions.selectCharacter(null);
+        return;
+      }
+
+      // Opponent side: select as card target in WAITING_FOR_ACTION
+      if (phase === 'WAITING_FOR_ACTION' && selectedCard) {
+        actions.selectCharacter(
+          selectedCharacter === characterId ? null : characterId,
+        );
+        return;
       }
     },
-    [isMyTurn, phase, currentPlayer, opponent, selectedCharacter, actions],
+    [isMyTurn, phase, currentPlayer, opponent, selectedCharacter, selectedCard, actions],
   );
 
   const handleAbility = useCallback(
