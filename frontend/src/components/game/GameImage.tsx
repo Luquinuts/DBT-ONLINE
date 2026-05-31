@@ -36,18 +36,13 @@ export function GameImage({
   // We let the browser fire onLoad/onError to correct this.
   return (
     <>
-      {/* Image — always mounted; visibility toggled */}
+      {/* Image — always mounted; opacity toggled (never display:none, so img always loads) */}
       <img
         src={src}
         alt={alt}
-        loading="lazy"
         onLoad={() => setState('loaded')}
         onError={() => setState('error')}
-        className={
-          state === 'loaded'
-            ? className ?? ''
-            : 'hidden'
-        }
+        className={`${className ?? ''} ${state !== 'loaded' ? 'opacity-0' : ''}`}
         {...imgProps}
       />
 
