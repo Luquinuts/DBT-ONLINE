@@ -8,7 +8,7 @@ export const CHARACTERS: CharacterDef[] = [
   {
     id: 'ssj-god-goku',
     name: 'SSJ God Goku',
-    type: 'DAMAGE',
+    type: 'SUPPORT',
     stats: { vida: 7, lentitud: 0, ataque: 1 },
     abilities: {
       habilidad: {
@@ -156,7 +156,7 @@ export const CHARACTERS: CharacterDef[] = [
   {
     id: 'beerus',
     name: 'Beerus',
-    type: 'DAMAGE',
+    type: 'TANQUE',
     stats: { vida: 10, lentitud: 4, ataque: 10 },
     abilities: {
       definitiva: {
@@ -218,7 +218,7 @@ export const CHARACTERS: CharacterDef[] = [
   {
     id: 'a17-a18',
     name: 'A17&A18',
-    type: 'DAMAGE',
+    type: 'SUPPORT',
     stats: { vida: 4, lentitud: 1, ataque: 1 },
     abilities: {
       pasiva: {
@@ -235,7 +235,7 @@ export const CHARACTERS: CharacterDef[] = [
   {
     id: 'ssj3-gotenks',
     name: 'SSJ3 Gotenks',
-    type: 'DAMAGE',
+    type: 'TANQUE',
     stats: { vida: 7, lentitud: 1, ataque: 2 },
     abilities: {
       pasiva: {

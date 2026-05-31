@@ -82,28 +82,37 @@ export default function CatalogPage() {
 
             {/* ─── Characters Grid ───────────── */}
             {tab === 'characters' && (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                {data.characters.map((char) => (
-                  <button
-                    key={char.id}
-                    onClick={() => setSelectedChar(char)}
-                    className="group relative aspect-[3/4] overflow-hidden rounded-lg border border-gray-700 bg-gray-800/50 transition hover:border-[#e94560]/50 hover:shadow-lg hover:shadow-[#e94560]/10"
-                  >
-                    <GameImage
-                      src={getCharacterImageSrc(char.id)}
-                      alt={char.name}
-                      className="h-full w-full object-cover transition group-hover:scale-105"
-                      fallback={
-                        <span className="text-4xl text-gray-600">?</span>
-                      }
-                    />
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
-                      <p className="text-sm font-bold text-white truncate">
-                        {char.name}
-                      </p>
+              <div className="space-y-8">
+                {typeOrder.map((t) => {
+                  const chars = data.characters.filter((c) => c.type === t);
+                  if (chars.length === 0) return null;
+                  return (
+                    <div key={t}>
+                      <h3 className={`mb-3 border-b pb-1 text-sm font-semibold uppercase tracking-wider ${typeSectionColor[t]}`}>
+                        {typeLabel[t]} ({chars.length})
+                      </h3>
+                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                        {chars.map((char) => (
+                          <button
+                            key={char.id}
+                            onClick={() => setSelectedChar(char)}
+                            className="group relative aspect-[3/4] overflow-hidden rounded-lg border border-gray-700 bg-gray-800/50 transition hover:border-[#e94560]/50 hover:shadow-lg hover:shadow-[#e94560]/10"
+                          >
+                            <GameImage
+                              src={getCharacterImageSrc(char.id)}
+                              alt={char.name}
+                              className="h-full w-full object-cover transition group-hover:scale-105"
+                              fallback={<span className="text-4xl text-gray-600">?</span>}
+                            />
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                              <p className="text-sm font-bold text-white truncate">{char.name}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </button>
-                ))}
+                  );
+                })}
               </div>
             )}
 
@@ -199,7 +208,7 @@ function DetailModal({ children, onClose }: { children: React.ReactNode; onClose
       onClick={onClose}
     >
       <div
-        className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-gray-700 bg-[#1a1a2e] p-6 shadow-2xl"
+        className="relative max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-xl border border-gray-700 bg-[#1a1a2e] p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -230,16 +239,24 @@ const typeColor: Record<string, string> = {
   SUPPORT: 'border-green-500 text-green-400',
 };
 
+const typeSectionColor: Record<string, string> = {
+  TANQUE: 'text-blue-400 border-blue-500/30',
+  DAMAGE: 'text-red-400 border-red-500/30',
+  SUPPORT: 'text-green-400 border-green-500/30',
+};
+
+const typeOrder = ['TANQUE', 'DAMAGE', 'SUPPORT'] as const;
+
 function CharacterDetail({ char }: { char: CharacterDef }) {
   return (
     <div className="flex gap-4">
       {/* Image — left */}
-      <div className="w-40 flex-shrink-0 overflow-hidden rounded-lg">
+      <div className="w-52 flex-shrink-0 overflow-hidden rounded-lg">
         <GameImage
           src={getCharacterImageSrc(char.id)}
           alt={char.name}
           className="w-full object-cover"
-          fallback={<div className="h-56 w-full bg-gray-800" />}
+          fallback={<div className="h-72 w-full bg-gray-800" />}
         />
       </div>
 
@@ -331,12 +348,12 @@ function AbilityDetail({ label, name, desc, extra }: { label: string; name: stri
 function BattlefieldDetail({ bf }: { bf: BattlefieldDef }) {
   return (
     <div className="flex gap-4">
-      <div className="w-48 flex-shrink-0 overflow-hidden rounded-lg">
+      <div className="w-60 flex-shrink-0 overflow-hidden rounded-lg">
         <GameImage
           src={getBattlefieldImageSrc(bf.id)}
           alt={bf.name}
           className="w-full object-cover"
-          fallback={<div className="h-32 w-full bg-gray-800" />}
+          fallback={<div className="h-40 w-full bg-gray-800" />}
         />
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-2">
@@ -362,12 +379,12 @@ function CardDetail({ card }: { card: CardDef }) {
   const styleClass = cardColors[card.category] || 'bg-gray-800 border-gray-700';
   return (
     <div className="flex gap-4">
-      <div className={`w-36 flex-shrink-0 overflow-hidden rounded-lg border ${styleClass}`}>
+      <div className={`w-48 flex-shrink-0 overflow-hidden rounded-lg border ${styleClass}`}>
         <GameImage
           src={getCardImageSrc(card.id) ?? ''}
           alt={card.name}
-          className="w-full object-contain p-3"
-          fallback={<div className="h-48 w-full bg-gray-800" />}
+          className="w-full object-contain p-4"
+          fallback={<div className="h-64 w-full bg-gray-800" />}
         />
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-3">
