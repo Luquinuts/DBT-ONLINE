@@ -60,12 +60,10 @@ export default function GamePage() {
   const [publicRoomsLoading, setPublicRoomsLoading] = useState(false);
 
   useEffect(() => {
-    if (inLobby || localView !== 'home') return;
-
-    const socket = getSocket();
-    if (!socket?.connected) return;
+    if (inLobby || localView !== 'home' || !connected) return;
 
     setPublicRoomsLoading(true);
+    const socket = getSocket();
     socket.emit('room:public_listing');
 
     const onList = (data: { rooms: PublicRoom[] }) => {
@@ -78,7 +76,7 @@ export default function GamePage() {
     return () => {
       socket.off('room:public_list', onList);
     };
-  }, [inLobby, localView]);
+  }, [inLobby, localView, connected]);
 
   return (
     <SidebarLayout>

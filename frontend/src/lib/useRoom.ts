@@ -104,7 +104,10 @@ export function useRoom() {
 
   const joinRoom = useCallback((code: string) => {
     const socket = getSocket();
-    if (!socket.connected) return;
+    if (!socket.connected) {
+      setState((prev) => ({ ...prev, error: 'Esperando conexión al servidor...' }));
+      return;
+    }
     socket.emit('room:join', {
       code,
       playerName: stateRef.current.playerName,
