@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import SidebarLayout from '@/components/SidebarLayout';
 import { GameImage } from '@/components/game/GameImage';
-import { getCharacterImageSrc, getBattlefieldImageSrc, getCardImageSrc } from '@/lib/assets';
+import { getCharacterImageSrc, getCharacterIconSrc, getBattlefieldImageSrc, getCardImageSrc, getBackgroundSrc } from '@/lib/assets';
 import type { CharacterDef, BattlefieldDef, CardDef } from '@dbt-online/shared';
 
 interface CatalogData {
@@ -82,7 +82,10 @@ export default function CatalogPage() {
 
             {/* ─── Characters Grid ───────────── */}
             {tab === 'characters' && (
-              <div className="space-y-8">
+              <div
+                className="space-y-8 rounded-xl bg-cover bg-center p-4"
+                style={{ backgroundImage: `url(${getBackgroundSrc('character-selection')})` }}
+              >
                 {typeOrder.map((t) => {
                   const chars = data.characters.filter((c) => c.type === t);
                   if (chars.length === 0) return null;
@@ -96,17 +99,14 @@ export default function CatalogPage() {
                           <button
                             key={char.id}
                             onClick={() => setSelectedChar(char)}
-                            className="group relative aspect-[3/4] overflow-hidden rounded-lg border border-gray-700 bg-gray-800/50 transition hover:border-[#e94560]/50 hover:shadow-lg hover:shadow-[#e94560]/10"
+                            className="group aspect-[3/4] overflow-hidden rounded-lg border border-white/10 bg-black/40 transition hover:border-[#e94560]/50 hover:shadow-lg hover:shadow-[#e94560]/10"
                           >
                             <GameImage
-                              src={getCharacterImageSrc(char.id)}
+                              src={getCharacterIconSrc(char.id)}
                               alt={char.name}
-                              className="h-full w-full object-cover transition group-hover:scale-105"
+                              className="h-full w-full object-contain p-1 transition group-hover:scale-105"
                               fallback={<span className="text-4xl text-gray-600">?</span>}
                             />
-                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
-                              <p className="text-sm font-bold text-white truncate">{char.name}</p>
-                            </div>
                           </button>
                         ))}
                       </div>

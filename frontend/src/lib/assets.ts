@@ -37,6 +37,30 @@ export function getCharacterImageSrc(characterId: string): string {
   return `/images/characters/${characterId}.png`;
 }
 
+// ─── Character icon images ────────────────────────────────────────
+
+const characterIconFixes: Record<string, string> = {
+  'ssj-god-goku': 'ssjgod-goku',
+  'ssj-blue-vegeta': 'ssjblue-vegeta',
+  'ssj-rose-black-goku': 'black-goku',
+};
+
+/**
+ * Some icon filenames differ from the character ID:
+ *   ssj-god-goku    → ssjgod-goku.png
+ *   ssj-blue-vegeta → ssjblue-vegeta.png
+ *   ssj-rose-black-goku → black-goku.png
+ */
+export function getCharacterIconSrc(characterId: string): string {
+  return `/images/icons/characters/${characterIconFixes[characterId] || characterId}.png`;
+}
+
+// ─── Background images ────────────────────────────────────────────
+
+export function getBackgroundSrc(name: string): string {
+  return `/images/background/${name}.png`;
+}
+
 // ─── Battlefield images ───────────────────────────────────────────
 
 export function getBattlefieldImageSrc(battlefieldId: string): string {
