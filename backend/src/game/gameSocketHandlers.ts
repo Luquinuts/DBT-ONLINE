@@ -218,7 +218,13 @@ function handleGameAction(
   // The engine may have set state directly, or we need to fetch it
   const state = result.state || engine.getState();
   const roomId = gameRegistry.getRoomId(data.roomCode);
-  if (!roomId) return;
+  if (!roomId) {
+    socket.emit('game:error', {
+      code: 'ROOM_NOT_FOUND',
+      message: 'Sala no encontrada al emitir state_update.',
+    });
+    return;
+  }
 
   // ── Broadcast updated state to both players ────────────────
   io.to(roomId).emit('game:state_update', state);
@@ -292,7 +298,13 @@ function handleDefenderResponse(
   // ── Broadcast updated state ────────────────────────────────
   const state = result.state || engine.getState();
   const roomId = gameRegistry.getRoomId(data.roomCode);
-  if (!roomId) return;
+  if (!roomId) {
+    socket.emit('game:error', {
+      code: 'ROOM_NOT_FOUND',
+      message: 'Sala no encontrada al responder defensa.',
+    });
+    return;
+  }
 
   io.to(roomId).emit('game:state_update', state);
 

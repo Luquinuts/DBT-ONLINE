@@ -114,7 +114,7 @@ export function useGame(
       socket.off('game:error', onError);
       socket.off('game:over', onGameOver);
     };
-  }, [playerId]);
+  }, [playerId, roomCode]);
 
   const emitGameAction = useCallback(
     (action: GameAction) => {
@@ -220,6 +220,8 @@ export function useGame(
           } as GameAction,
         });
         dispatch({ type: 'DEFENDER_RESPONDED' });
+        // Pull latest state immediately instead of waiting for broadcast
+        socket.emit('game:request_sync', roomCode);
       },
       [roomCode],
     ),
