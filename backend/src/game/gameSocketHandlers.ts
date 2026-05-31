@@ -54,12 +54,10 @@ export function registerGameHandlers(
   socket: Socket<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>,
   rooms: RoomMap
 ): void {
-  const playerId = socket.data.playerId || socket.id;
-
   // ── room:start_game ──────────────────────────────────────────
   socket.on('room:start_game', (roomCode: string) => {
     try {
-      handleStartGame(io, socket, playerId, rooms, roomCode);
+      handleStartGame(io, socket, socket.data.playerId || socket.id, rooms, roomCode);
     } catch (err) {
       console.error('[game:start_game] error:', err);
       socket.emit('game:error', {
@@ -72,7 +70,7 @@ export function registerGameHandlers(
   // ── game:action ──────────────────────────────────────────────
   socket.on('game:action', (data: { roomCode: string; action: GameAction }) => {
     try {
-      handleGameAction(io, socket, playerId, data);
+      handleGameAction(io, socket, socket.data.playerId || socket.id, data);
     } catch (err) {
       console.error('[game:action] error:', err);
       socket.emit('game:error', {
@@ -85,7 +83,7 @@ export function registerGameHandlers(
   // ── game:defender_response ───────────────────────────────────
   socket.on('game:defender_response', (data: { roomCode: string; action: GameAction }) => {
     try {
-      handleDefenderResponse(io, socket, playerId, data);
+      handleDefenderResponse(io, socket, socket.data.playerId || socket.id, data);
     } catch (err) {
       console.error('[game:defender_response] error:', err);
       socket.emit('game:error', {
