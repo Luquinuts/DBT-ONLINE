@@ -20,13 +20,15 @@ export function CardPlayPanel({
   onPlay,
   onCancel,
 }: CardPlayPanelProps) {
-  const cardInfo = CARD_DISPLAY[cardId];
+  // Card IDs have instance suffix (_1, _2, …) — strip it for display lookup
+  const baseCardId = cardId.replace(/_\d+$/, '');
+  const cardInfo = CARD_DISPLAY[baseCardId];
   if (!cardInfo) return null;
 
   const needsTarget =
     cardInfo.type === 'ITEM' ||
     ['semilla_senzu', 'plus_vida', 'nube_kinton', 'baculo_sagrado', 'rage', 'esfera_dragon'].some((k) =>
-      cardId.startsWith(k),
+      baseCardId.startsWith(k),
     );
 
   const targetCharDef = selectedCharacter

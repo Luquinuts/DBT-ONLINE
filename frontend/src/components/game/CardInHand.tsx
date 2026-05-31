@@ -17,7 +17,9 @@ export function CardInHand({
   isSelected,
   onClick,
 }: CardInHandProps) {
-  const cardInfo = CARD_DISPLAY[cardId];
+  // Card IDs have instance suffix (_1, _2, …) — strip it for display lookup
+  const baseCardId = cardId.replace(/_\d+$/, '');
+  const cardInfo = CARD_DISPLAY[baseCardId];
 
   if (!cardInfo) {
     return (
