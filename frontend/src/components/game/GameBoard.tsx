@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useEffect, useRef } from 'react';
+import { useCallback, useMemo, useEffect, useRef, useState } from 'react';
 import type { GamePhase } from '@dbt-online/shared';
 import type { GameUIState } from '@/lib/gameReducer';
 import type { UseGameReturn } from '@/lib/useGame';
@@ -10,6 +10,7 @@ import { ActionBar } from './ActionBar';
 import { CardPlayPanel } from './CardPlayPanel';
 import { BattlefieldDisplay } from './BattlefieldDisplay';
 import { GameLog } from './GameLog';
+import { CharacterModal } from './CharacterModal';
 import './card-effects.css';
 
 interface GameBoardProps {
@@ -41,6 +42,27 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
     flyingCard,
     attackAnimation,
   } = state;
+
+  // ─── Modal state ─────────────────────────────────────────────
+  const [modalCharacterId, setModalCharacterId] = useState<string | null>(null);
+
+  // ─── Close modal on phase change ─────────────────────────────
+  useEffect(() => {
+    if (modalCharacterId && phase !== 'WAITING_FOR_ACTION' && phase !== 'ADVANCE') {
+      setModalCharacterId(null);
+    }
+  }, [phase, modalCharacterId]);
+
+  // ─── Close modal if character dies ──────────────────────────
+  useEffect(() => {
+    if (!modalCharacterId || !currentPlayer) return;
+    const char = currentPlayer.characters.find(
+      (c) => c.characterId === modalCharacterId,
+    );
+    if (!char || !char.isAlive) {
+      setModalCharacterId(null);
+    }
+  }, [currentPlayer, modalCharacterId]);
 
   // ─── Auto-trigger animations from turn log ────────────────
   const prevLogLen = useRef(0);
@@ -164,37 +186,35 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
       );
       if (!character || !character.isAlive) return;
 
-      // Player side: only act in phases with meaningful actions
+      // Player side
       if (isPlayerSide) {
-        if (
-          phase === 'ADVANCE' &&
-          character.advanceCounter < character.currentLentitud
-        ) {
-          actions.advance(characterId);
+        // In ADVANCE or WAITING_FOR_ACTION: open modal instead of direct action
+        if (phase === 'ADVANCE' || phase === 'WAITING_FOR_ACTION') {
+          setModalCharacterId(characterId);
           return;
         }
 
+        // ATTACK phase: toggle attacker selection (existing behavior)
         if (
           phase === 'ATTACK' &&
           character.advanceCounter >= character.currentLentitud &&
           !character.hasAttackedThisTurn
         ) {
-          // Toggle attacker selection
           actions.selectCharacter(
             selectedCharacter === characterId ? null : characterId,
           );
           return;
         }
 
-        if (phase === 'WAITING_FOR_ACTION' || phase === 'BATTLEFIELD') {
-          // In WAITING_FOR_ACTION / BATTLEFIELD, select character for card targeting
+        // BATTLEFIELD: select character for card targeting
+        if (phase === 'BATTLEFIELD') {
           actions.selectCharacter(
             selectedCharacter === characterId ? null : characterId,
           );
           return;
         }
 
-        // Other phases (DEFENDER_RESPONSE, END_TURN): no character selection
+        // Other phases (DEFENDER_RESPONSE, END_TURN): no action
         return;
       }
 
@@ -287,6 +307,11 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
 
   const phaseLabel = phase ? PHASE_LABELS[phase] || phase : '';
 
+  // ─── Find modal character ─────────────────────────────────────
+  const modalCharacter = modalCharacterId && currentPlayer
+    ? currentPlayer.characters.find((c) => c.characterId === modalCharacterId)
+    : null;
+
   // ─── Render ----------------------------------------------------
   return (
     <div className="flex flex-1 flex-col gap-3 p-3 md:p-6 max-w-5xl mx-auto w-full">
@@ -331,11 +356,10 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
           characters={opponent.characters}
           isPlayer={false}
           playerData={opponent}
+          playerKi={currentPlayer?.ki ?? 0}
           selectedCharacter={selectedCharacter}
           phase={phase}
           onCharacterClick={(id) => handleCharacterClick(id, false)}
-          onAbility={handleAbility}
-          onDefinitiva={handleDefinitiva}
           eligibilityMap={opponentEligibilityMap}
           targetMap={opponentTargetMap}
         />
@@ -353,11 +377,10 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
           characters={currentPlayer.characters}
           isPlayer={true}
           playerData={currentPlayer}
+          playerKi={currentPlayer.ki}
           selectedCharacter={selectedCharacter}
           phase={phase}
           onCharacterClick={(id) => handleCharacterClick(id, true)}
-          onAbility={handleAbility}
-          onDefinitiva={handleDefinitiva}
           eligibilityMap={playerEligibilityMap}
           targetMap={playerTargetMap}
         />
@@ -426,6 +449,29 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
             -{attackAnimation.damage}
           </div>
         </div>
+      )}
+
+      {/* ─── Character Modal ─────────────────────────────────── */}
+      {modalCharacter && phase && isMyTurn && (
+        <CharacterModal
+          character={modalCharacter}
+          playerKi={currentPlayer?.ki ?? 0}
+          phase={phase}
+          isMyTurn={isMyTurn}
+          onAdvance={() => {
+            actions.advance(modalCharacterId!);
+            setModalCharacterId(null);
+          }}
+          onAbility={() => {
+            handleAbility(modalCharacterId!);
+            setModalCharacterId(null);
+          }}
+          onDefinitiva={() => {
+            handleDefinitiva(modalCharacterId!);
+            setModalCharacterId(null);
+          }}
+          onClose={() => setModalCharacterId(null)}
+        />
       )}
     </div>
   );

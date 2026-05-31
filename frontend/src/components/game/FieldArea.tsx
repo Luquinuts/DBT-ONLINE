@@ -1,18 +1,16 @@
 'use client';
 
 import type { CharacterState, PlayerGameState, GamePhase } from '@dbt-online/shared';
-import { CHARACTER_DISPLAY } from '@/data/character-display';
 import { CharacterCard } from './CharacterCard';
 
 interface FieldAreaProps {
   characters: CharacterState[];
   isPlayer: boolean;
   playerData: PlayerGameState;
+  playerKi: number;
   selectedCharacter: string | null;
   phase: GamePhase;
   onCharacterClick: (characterId: string) => void;
-  onAbility: (characterId: string) => void;
-  onDefinitiva: (characterId: string) => void;
   /** Per-character eligibility: map of characterId -> isEligible */
   eligibilityMap: Record<string, boolean>;
   /** Per-character targetability: map of characterId -> canTarget */
@@ -21,22 +19,14 @@ interface FieldAreaProps {
   isDefending?: boolean;
 }
 
-// Characters that actually have a habilidad defined
-const CHARACTERS_WITH_HABILIDAD = new Set([
-  'ssj-god-goku', 'golden-frieza', 'hit', 'ssj2-gohan',
-  'piccolo', 'jiren', 'ssj-future-trunks', 'ssj-goku',
-  'ssj-rose-black-goku',
-]);
-
 export function FieldArea({
   characters,
   isPlayer,
   playerData,
+  playerKi,
   selectedCharacter,
   phase,
   onCharacterClick,
-  onAbility,
-  onDefinitiva,
   eligibilityMap,
   targetMap,
   battlefieldEffect,
@@ -91,10 +81,7 @@ export function FieldArea({
             isSelected={selectedCharacter === char.characterId}
             isEligible={eligibilityMap[char.characterId] ?? false}
             canTarget={targetMap[char.characterId] ?? false}
-            showActions={isPlayer}
             onClick={() => onCharacterClick(char.characterId)}
-            onAbility={CHARACTERS_WITH_HABILIDAD.has(char.characterId) ? () => onAbility(char.characterId) : undefined}
-            onDefinitiva={() => onDefinitiva(char.characterId)}
             battlefieldEffect={battlefieldEffect}
             isDefending={isDefending}
           />
