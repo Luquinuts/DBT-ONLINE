@@ -18,11 +18,7 @@ interface CharacterModalProps {
   onClose: () => void;
 }
 
-const TYPE_STYLES: Record<string, { badge: string; accent: string }> = {
-  TANQUE: { badge: 'bg-violet-700', accent: 'border-violet-500' },
-  DAMAGE: { badge: 'bg-red-700', accent: 'border-red-500' },
-  SUPPORT: { badge: 'bg-sky-700', accent: 'border-sky-500' },
-};
+
 
 export function CharacterModal({
   character,
@@ -87,8 +83,6 @@ export function CharacterModal({
     );
   }
 
-  const typeStyle = TYPE_STYLES[charDef.type] || TYPE_STYLES.DAMAGE;
-
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
@@ -101,47 +95,19 @@ export function CharacterModal({
       >
         {/* ─── Large character image ───────────────────────── */}
         <div
-          className="relative h-48 overflow-hidden"
+          className="relative"
           style={{ backgroundColor: charDef.color + '20' }}
         >
           <GameImage
             src={getCharacterImageSrc(character.characterId)}
             alt={charDef.displayName}
-            className="absolute inset-0 w-full h-full object-cover"
+            className="w-full object-contain"
             fallback={
-              <div className="flex h-full w-full items-center justify-center">
+              <div className="flex h-48 w-full items-center justify-center">
                 <span className="text-4xl">?</span>
               </div>
             }
           />
-
-          {/* Name + type badge */}
-          <div className="absolute top-0 left-0 right-0 flex items-start justify-between gap-1 px-4 pt-3 pb-1 pointer-events-none">
-            <span className="text-lg font-bold text-white drop-shadow-sm">
-              {charDef.displayName}
-            </span>
-            <span
-              className={`shrink-0 rounded-md ${typeStyle.badge} px-2 py-0.5 text-xs font-bold uppercase text-white shadow-sm`}
-            >
-              {charDef.type}
-            </span>
-          </div>
-        </div>
-
-        {/* ─── Stats row ────────────────────────────────────── */}
-        <div className="flex justify-center gap-6 border-b border-gray-700/30 px-4 py-3">
-          <span className="text-sm text-gray-400">
-            ATK{' '}
-            <span className="font-bold text-red-400">{character.currentAtaque}</span>
-          </span>
-          <span className="text-sm text-gray-400">
-            LENT{' '}
-            <span className="font-bold text-blue-400">{character.currentLentitud}</span>
-          </span>
-          <span className="text-sm text-gray-400">
-            KI{' '}
-            <span className="font-bold text-yellow-400">{playerKi}</span>
-          </span>
         </div>
 
         {/* ─── Action buttons ───────────────────────────────── */}
