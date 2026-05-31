@@ -17,12 +17,6 @@ interface CharacterCardProps {
   isDefending?: boolean;
 }
 
-const TYPE_STYLES: Record<string, { badge: string; accent: string }> = {
-  TANQUE: { badge: 'bg-violet-700', accent: 'border-violet-500' },
-  DAMAGE: { badge: 'bg-red-700', accent: 'border-red-500' },
-  SUPPORT: { badge: 'bg-sky-700', accent: 'border-sky-500' },
-};
-
 export function CharacterCard({
   character,
   isPlayer,
@@ -57,8 +51,6 @@ export function CharacterCard({
           ? 'border-green-400 shadow-[0_0_14px_rgba(74,222,128,0.6)] ring-2 ring-green-500/50 cursor-pointer'
           : 'border-gray-600';
 
-  const typeStyle = TYPE_STYLES[charDef.type] || TYPE_STYLES.DAMAGE;
-
   return (
     <div
       onClick={isDead ? undefined : onClick}
@@ -71,17 +63,17 @@ export function CharacterCard({
         ${isDefending ? 'ring-2 ring-yellow-400/60' : ''}
       `}
     >
-      {/* ─── Image area (fixed height, full-opacity art) ──── */}
+      {/* ─── Character image (full art, no crop) ──────────── */}
       <div
-        className="relative h-36 overflow-hidden"
+        className="relative flex-shrink-0"
         style={{ backgroundColor: charDef.color + '20' }}
       >
         <GameImage
           src={getCharacterImageSrc(character.characterId)}
           alt={charDef.displayName}
-          className="absolute inset-0 w-full h-full object-cover"
+          className="w-full object-contain"
           fallback={
-            <div className="flex h-full w-full items-center justify-center">
+            <div className="flex h-48 w-full items-center justify-center">
               <span className="text-3xl">?</span>
             </div>
           }
@@ -96,28 +88,6 @@ export function CharacterCard({
             </div>
           </div>
         )}
-
-        {/* ─── Name + Type badge (overlaid on art) ─────────── */}
-        <div className="absolute top-0 left-0 right-0 z-10 flex items-start justify-between gap-1 px-3 pt-2.5 pb-1 pointer-events-none">
-          <span className="text-sm font-bold text-white truncate drop-shadow-sm">
-            {charDef.displayName}
-          </span>
-          <span
-            className={`shrink-0 rounded-md ${typeStyle.badge} px-1.5 py-0.5 text-[10px] font-bold uppercase text-white shadow-sm`}
-          >
-            {charDef.type}
-          </span>
-        </div>
-
-        {/* ─── Stats row (overlaid at bottom of art) ───────── */}
-        <div className="absolute bottom-1 left-0 right-0 z-10 mx-3 rounded-md bg-black/30 px-2 py-1 text-xs backdrop-blur-sm pointer-events-none">
-          <span className="text-gray-400">
-            ATK <span className="font-bold text-red-400">{character.currentAtaque}</span>
-          </span>
-          <span className="ml-4 text-gray-400">
-            LENT <span className="font-bold text-blue-400">{character.currentLentitud}</span>
-          </span>
-        </div>
       </div>
 
       {/* ─── HP Bar (below image) ──────────────────────────── */}
