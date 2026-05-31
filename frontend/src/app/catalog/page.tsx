@@ -199,7 +199,7 @@ function DetailModal({ children, onClose }: { children: React.ReactNode; onClose
       onClick={onClose}
     >
       <div
-        className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-gray-700 bg-[#1a1a2e] p-6 shadow-2xl"
+        className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-gray-700 bg-[#1a1a2e] p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -232,80 +232,83 @@ const typeColor: Record<string, string> = {
 
 function CharacterDetail({ char }: { char: CharacterDef }) {
   return (
-    <div>
-      {/* Image */}
-      <div className="mb-4 overflow-hidden rounded-lg">
+    <div className="flex gap-4">
+      {/* Image — left */}
+      <div className="w-40 flex-shrink-0 overflow-hidden rounded-lg">
         <GameImage
           src={getCharacterImageSrc(char.id)}
           alt={char.name}
           className="w-full object-cover"
-          fallback={<div className="h-48 w-full bg-gray-800" />}
+          fallback={<div className="h-56 w-full bg-gray-800" />}
         />
       </div>
 
-      {/* Header */}
-      <div className="mb-4 flex items-start justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-white">{char.name}</h2>
-          <span className={`inline-block mt-1 rounded border px-2 py-0.5 text-xs font-medium ${typeColor[char.type] || 'border-gray-500 text-gray-400'}`}>
-            {typeLabel[char.type] || char.type}
-          </span>
+      {/* Data — right */}
+      <div className="flex min-w-0 flex-1 flex-col gap-3">
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-white">{char.name}</h2>
+            <span className={`inline-block mt-1 rounded border px-2 py-0.5 text-xs font-medium ${typeColor[char.type] || 'border-gray-500 text-gray-400'}`}>
+              {typeLabel[char.type] || char.type}
+            </span>
+          </div>
         </div>
-      </div>
 
-      {/* Stats */}
-      <div className="mb-4 grid grid-cols-3 gap-2 text-center text-sm">
-        <div className="rounded bg-gray-700/50 p-2">
-          <p className="text-xs text-gray-400">Vida</p>
-          <p className="text-lg font-bold text-white">{char.stats.vida}</p>
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-2 text-center text-sm">
+          <div className="rounded bg-gray-700/50 p-2">
+            <p className="text-xs text-gray-400">Vida</p>
+            <p className="text-lg font-bold text-white">{char.stats.vida}</p>
+          </div>
+          <div className="rounded bg-gray-700/50 p-2">
+            <p className="text-xs text-gray-400">Lentitud</p>
+            <p className="text-lg font-bold text-white">{char.stats.lentitud}</p>
+          </div>
+          <div className="rounded bg-gray-700/50 p-2">
+            <p className="text-xs text-gray-400">Ataque</p>
+            <p className="text-lg font-bold text-white">{char.stats.ataque}</p>
+          </div>
         </div>
-        <div className="rounded bg-gray-700/50 p-2">
-          <p className="text-xs text-gray-400">Lentitud</p>
-          <p className="text-lg font-bold text-white">{char.stats.lentitud}</p>
-        </div>
-        <div className="rounded bg-gray-700/50 p-2">
-          <p className="text-xs text-gray-400">Ataque</p>
-          <p className="text-lg font-bold text-white">{char.stats.ataque}</p>
-        </div>
-      </div>
 
-      {/* Abilities */}
-      <div className="space-y-2">
-        {char.abilities.pasiva && (
-          <AbilityDetail label="Pasiva" name={char.abilities.pasiva.name} desc={char.abilities.pasiva.description} />
-        )}
-        {char.abilities.habilidad && (
-          <AbilityDetail
-            label="Habilidad"
-            name={char.abilities.habilidad.name}
-            desc={char.abilities.habilidad.description}
-            extra={
-              char.abilities.habilidad.cooldown > 0
-                ? `CD: ${char.abilities.habilidad.cooldown}`
-                : char.abilities.habilidad.usesPerGame
-                  ? `${char.abilities.habilidad.usesPerGame} uso/s`
-                  : undefined
-            }
-          />
-        )}
-        {char.abilities.definitiva && (
-          <AbilityDetail
-            label="Definitiva"
-            name={char.abilities.definitiva.name}
-            desc={char.abilities.definitiva.description}
-            extra={`${char.abilities.definitiva.kiCost} ki`}
-          />
+        {/* Abilities */}
+        <div className="space-y-2">
+          {char.abilities.pasiva && (
+            <AbilityDetail label="Pasiva" name={char.abilities.pasiva.name} desc={char.abilities.pasiva.description} />
+          )}
+          {char.abilities.habilidad && (
+            <AbilityDetail
+              label="Habilidad"
+              name={char.abilities.habilidad.name}
+              desc={char.abilities.habilidad.description}
+              extra={
+                char.abilities.habilidad.cooldown > 0
+                  ? `CD: ${char.abilities.habilidad.cooldown}`
+                  : char.abilities.habilidad.usesPerGame
+                    ? `${char.abilities.habilidad.usesPerGame} uso/s`
+                    : undefined
+              }
+            />
+          )}
+          {char.abilities.definitiva && (
+            <AbilityDetail
+              label="Definitiva"
+              name={char.abilities.definitiva.name}
+              desc={char.abilities.definitiva.description}
+              extra={`${char.abilities.definitiva.kiCost} ki`}
+            />
+          )}
+        </div>
+
+        {/* Icons */}
+        {Object.keys(char.icons).length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {char.icons.rage && <span className="rounded bg-yellow-500/10 px-2 py-0.5 text-xs text-yellow-400">Rage</span>}
+            {char.icons.change && <span className="rounded bg-blue-500/10 px-2 py-0.5 text-xs text-blue-400">Cambio de forma</span>}
+            {char.icons.deathIcon && <span className="rounded bg-red-500/10 px-2 py-0.5 text-xs text-red-400">Death icon</span>}
+          </div>
         )}
       </div>
-
-      {/* Icons */}
-      {Object.keys(char.icons).length > 0 && (
-        <div className="mt-4 flex flex-wrap gap-1">
-          {char.icons.rage && <span className="rounded bg-yellow-500/10 px-2 py-0.5 text-xs text-yellow-400">Rage</span>}
-          {char.icons.change && <span className="rounded bg-blue-500/10 px-2 py-0.5 text-xs text-blue-400">Cambio de forma</span>}
-          {char.icons.deathIcon && <span className="rounded bg-red-500/10 px-2 py-0.5 text-xs text-red-400">Death icon</span>}
-        </div>
-      )}
     </div>
   );
 }
@@ -327,20 +330,22 @@ function AbilityDetail({ label, name, desc, extra }: { label: string; name: stri
 
 function BattlefieldDetail({ bf }: { bf: BattlefieldDef }) {
   return (
-    <div>
-      <div className="mb-4 overflow-hidden rounded-lg">
+    <div className="flex gap-4">
+      <div className="w-48 flex-shrink-0 overflow-hidden rounded-lg">
         <GameImage
           src={getBattlefieldImageSrc(bf.id)}
           alt={bf.name}
           className="w-full object-cover"
-          fallback={<div className="h-40 w-full bg-gray-800" />}
+          fallback={<div className="h-32 w-full bg-gray-800" />}
         />
       </div>
-      <h2 className="mb-2 text-xl font-bold text-white">{bf.name}</h2>
-      <p className="mb-3 text-sm leading-relaxed text-gray-400">{bf.description}</p>
-      <span className="inline-block rounded bg-gray-700/50 px-2 py-0.5 text-xs font-mono text-gray-500">
-        {bf.effect}
-      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
+        <h2 className="text-xl font-bold text-white">{bf.name}</h2>
+        <p className="text-sm leading-relaxed text-gray-400">{bf.description}</p>
+        <span className="inline-block self-start rounded bg-gray-700/50 px-2 py-0.5 text-xs font-mono text-gray-500">
+          {bf.effect}
+        </span>
+      </div>
     </div>
   );
 }
@@ -356,38 +361,39 @@ const cardColors: Record<string, string> = {
 function CardDetail({ card }: { card: CardDef }) {
   const styleClass = cardColors[card.category] || 'bg-gray-800 border-gray-700';
   return (
-    <div>
-      <div className={`mb-4 overflow-hidden rounded-lg border ${styleClass}`}>
+    <div className="flex gap-4">
+      <div className={`w-36 flex-shrink-0 overflow-hidden rounded-lg border ${styleClass}`}>
         <GameImage
           src={getCardImageSrc(card.id) ?? ''}
           alt={card.name}
-          className="w-full object-contain p-4"
-          fallback={<div className="h-40 w-full bg-gray-800" />}
+          className="w-full object-contain p-3"
+          fallback={<div className="h-48 w-full bg-gray-800" />}
         />
       </div>
+      <div className="flex min-w-0 flex-1 flex-col gap-3">
+        <div className="flex items-start justify-between">
+          <h2 className="text-xl font-bold text-white">{card.name}</h2>
+          <span className="rounded bg-gray-700/50 px-2 py-0.5 text-xs font-medium text-gray-400">
+            {card.category}
+          </span>
+        </div>
 
-      <div className="mb-3 flex items-start justify-between">
-        <h2 className="text-xl font-bold text-white">{card.name}</h2>
-        <span className="rounded bg-gray-700/50 px-2 py-0.5 text-xs font-medium text-gray-400">
-          {card.category}
-        </span>
-      </div>
+        <p className="text-sm leading-relaxed text-gray-400">{card.description}</p>
 
-      <p className="mb-3 text-sm leading-relaxed text-gray-400">{card.description}</p>
-
-      <div className="flex flex-wrap gap-1 mb-3">
-        <span className="rounded bg-gray-700/50 px-2 py-0.5 text-xs font-mono text-gray-500">
-          {card.effect}
-        </span>
-        {card.isDefense && (
-          <span className="rounded bg-yellow-500/10 px-2 py-0.5 text-xs text-yellow-400">Defensa</span>
-        )}
-        {card.isEquipable && (
-          <span className="rounded bg-cyan-500/10 px-2 py-0.5 text-xs text-cyan-400">Equipable</span>
-        )}
-        {card.usageLimit && (
-          <span className="rounded bg-orange-500/10 px-2 py-0.5 text-xs text-orange-400">×{card.usageLimit}</span>
-        )}
+        <div className="flex flex-wrap gap-1">
+          <span className="rounded bg-gray-700/50 px-2 py-0.5 text-xs font-mono text-gray-500">
+            {card.effect}
+          </span>
+          {card.isDefense && (
+            <span className="rounded bg-yellow-500/10 px-2 py-0.5 text-xs text-yellow-400">Defensa</span>
+          )}
+          {card.isEquipable && (
+            <span className="rounded bg-cyan-500/10 px-2 py-0.5 text-xs text-cyan-400">Equipable</span>
+          )}
+          {card.usageLimit && (
+            <span className="rounded bg-orange-500/10 px-2 py-0.5 text-xs text-orange-400">×{card.usageLimit}</span>
+          )}
+        </div>
       </div>
     </div>
   );
