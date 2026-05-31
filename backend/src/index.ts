@@ -240,7 +240,7 @@ io.on('connection', async (socket) => {
   socket.on('room:create', ({ name, playerName, maxPlayers, isPublic = true }) => {
     const code = generateCode();
     const player: Player = {
-      id: socket.id,
+      id: socket.data.supabaseUserId || socket.id,
       name: playerName || name,
       isHost: true,
       joinedAt: new Date().toISOString(),
@@ -301,7 +301,7 @@ io.on('connection', async (socket) => {
     }
 
     const player: Player = {
-      id: socket.id,
+      id: socket.data.supabaseUserId || socket.id,
       name: playerName,
       isHost: room.players.length === 0,
       joinedAt: new Date().toISOString(),
@@ -410,7 +410,7 @@ io.on('connection', async (socket) => {
     const room = rooms.get(roomId);
     if (!room) return;
 
-    const idx = room.players.findIndex((p) => p.id === socket.id);
+    const idx = room.players.findIndex((p) => p.id === (socket.data.playerId || socket.id));
     if (idx === -1) return;
 
     const [player] = room.players.splice(idx, 1);
