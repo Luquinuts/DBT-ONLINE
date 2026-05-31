@@ -29,6 +29,7 @@ export interface UseGameReturn {
     ) => void;
     useHabilidad: (characterId: string, targetCharacterId?: string) => void;
     pass: () => void;
+    redraw: () => void;
     endTurn: () => void;
     defenderResponse: (
       action: 'ESQUIVE' | 'ESCUDO' | 'NONE',
@@ -191,6 +192,10 @@ export function useGame(
 
     pass: useCallback(() => {
       emitGameAction({ type: 'PASS' });
+    }, [emitGameAction]),
+
+    redraw: useCallback(() => {
+      emitGameAction({ type: 'REDRAW' });
     }, [emitGameAction]),
 
     endTurn: useCallback(() => {

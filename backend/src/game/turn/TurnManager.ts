@@ -168,6 +168,35 @@ export class TurnManager {
   }
 
   /**
+   * Handle a REDRAW action — draw 1 card (once per turn).
+   */
+  handleRedraw(state: GameStateManager): TurnActionResult {
+    const currentPlayer = state.getState().players[state.getCurrentPlayerIndex()];
+
+    if (!currentPlayer.canRedrawThisTurn) {
+      return {
+        success: false,
+        error: 'Ya usaste tu redraw este turno.',
+      };
+    }
+
+    if (currentPlayer.deck.length === 0) {
+      return {
+        success: false,
+        error: 'No quedan cartas en el mazo.',
+      };
+    }
+
+    const drawn = currentPlayer.deck.shift()!;
+    currentPlayer.hand.push(drawn);
+    currentPlayer.canRedrawThisTurn = false;
+
+    state.addLog('DRAW', `Player ${state.getCurrentPlayerIndex()} redrew a card.`);
+
+    return { success: true };
+  }
+
+  /**
    * Handle a USE_HABILIDAD action.
    * For Phase 3, this validates cooldown/usage and routes to the effect engine.
    * Currently validates basic constraints — full ability resolution in later phases.

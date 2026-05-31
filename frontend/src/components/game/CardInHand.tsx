@@ -32,27 +32,27 @@ export function CardInHand({
     <button
       type="button"
       onClick={onClick}
-      disabled={!isPlayable}
       className={`
         group relative flex h-28 w-20 shrink-0 flex-col overflow-hidden rounded-lg border-2
         bg-gradient-to-b from-white/10 to-white/5
         transition-all duration-200
         hover:-translate-y-5 hover:scale-110 hover:shadow-lg hover:z-20
+        cursor-pointer
         ${
           isSelected
             ? 'border-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.6)] z-10'
             : isPlayable
-              ? 'border-gray-600 hover:border-gray-400 cursor-pointer'
-              : 'border-gray-700 cursor-not-allowed'
+              ? 'border-gray-600 hover:border-gray-400'
+              : 'border-gray-700'
         }
-        ${!isPlayable ? 'opacity-50 grayscale' : ''}
+        ${!isPlayable ? 'opacity-60' : ''}
       `}
       style={{ borderColor: isSelected ? undefined : borderColor + '60' }}
     >
-      {/* Non-playable overlay */}
+      {/* Non-playable subtle indicator */}
       {!isPlayable && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/30">
-          <span className="text-lg font-bold text-red-400">✕</span>
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/10 rounded-lg">
+          <span className="text-[10px] font-semibold text-gray-500 bg-black/60 px-2 py-0.5 rounded">No jugable</span>
         </div>
       )}
 

@@ -106,8 +106,8 @@ export default function GamePage({ roomCode, playerId, playerName, isHost }: Pro
             onLeave={handleReturnToLobby}
           />
 
-          {/* Defender Response Modal */}
-          {state.isDefenderResponse && state.pendingAttack && (
+          {/* Defender Response Modal — solo visible para el defensor */}
+          {state.isDefenderResponse && state.pendingAttack && state.pendingAttack.targetPlayerIndex === state.playerIndex && (
             <DefenderResponseModal
               pendingAttack={state.pendingAttack}
               playerHand={state.currentPlayer?.hand || []}

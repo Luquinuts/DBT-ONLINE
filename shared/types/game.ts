@@ -181,7 +181,8 @@ export type GameAction =
   | { type: 'PASS' }
   | { type: 'SWITCH_FORM'; characterId: string; targetForm: string }
   | { type: 'DRAGON_REVIVE'; targetCharacterId: string }
-  | { type: 'END_TURN' };
+  | { type: 'END_TURN' }
+  | { type: 'REDRAW' };
 
 // ─── Game error ─────────────────────────────────────────────────
 

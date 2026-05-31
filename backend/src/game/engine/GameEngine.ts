@@ -144,6 +144,10 @@ export class GameEngine {
         result = this.handleDragonRevive(playerIndex, action.targetCharacterId);
         break;
 
+      case 'REDRAW':
+        result = this.handleRedraw(playerIndex);
+        break;
+
       default:
         result = {
           success: false,
@@ -630,6 +634,19 @@ export class GameEngine {
     }
 
     return this.handlePlayCard(playerIndex, dragonBallCard, targetCharacterId, this.state.getState());
+  }
+
+  private handleRedraw(playerIndex: number): EngineResult {
+    const result = this.turn.handleRedraw(this.state);
+
+    if (!result.success) {
+      return {
+        success: false,
+        error: { code: 'REDRAW_ERROR', message: result.error! },
+      };
+    }
+
+    return { success: true };
   }
 
   // ─── Decks ───────────────────────────────────────────────────

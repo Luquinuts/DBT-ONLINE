@@ -64,7 +64,8 @@ export function FieldArea({
       <div className="flex items-center justify-between px-1">
         <h3 className="text-sm font-semibold text-gray-300">{playerLabel}</h3>
         <div className="flex items-center gap-3 text-xs text-gray-400">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1" title="Ki disponible — se genera 1 por turno">
+            <span className="text-[10px] text-gray-500">KI</span>
             {renderKiDisplay(playerData.ki)}
           </div>
           <span className="text-gray-600">|</span>

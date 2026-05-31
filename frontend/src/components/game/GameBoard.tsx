@@ -154,7 +154,7 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
       );
       if (!character || !character.isAlive) return;
 
-      // Player side: advance or select
+      // Player side: only act in phases with meaningful actions
       if (isPlayerSide) {
         if (
           phase === 'ADVANCE' &&
@@ -176,14 +176,19 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
           return;
         }
 
-        // Default: select character for ability targeting etc.
-        actions.selectCharacter(
-          selectedCharacter === characterId ? null : characterId,
-        );
+        if (phase === 'WAITING_FOR_ACTION' || phase === 'BATTLEFIELD') {
+          // In WAITING_FOR_ACTION / BATTLEFIELD, select character for card targeting
+          actions.selectCharacter(
+            selectedCharacter === characterId ? null : characterId,
+          );
+          return;
+        }
+
+        // Other phases (DEFENDER_RESPONSE, END_TURN): no character selection
         return;
       }
 
-      // Opponent side: targeting
+      // Opponent side: only target in ATTACK phase with an attacker selected
       if (phase === 'ATTACK' && selectedCharacter) {
         actions.attack(selectedCharacter, characterId, 'NORMAL');
         actions.selectCharacter(null);
@@ -226,6 +231,10 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
 
   const handlePass = useCallback(() => {
     actions.pass();
+  }, [actions]);
+
+  const handleRedraw = useCallback(() => {
+    actions.redraw();
   }, [actions]);
 
   const handleEndTurn = useCallback(() => {
@@ -339,7 +348,9 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
           ultimateUses={currentPlayer.ultimateUsesRemaining}
           hasAdvancedThisTurn={currentPlayer.hasAdvancedThisTurn}
           hasPlayedEquipableThisTurn={currentPlayer.hasPlayedEquipableThisTurn}
+          canRedrawThisTurn={currentPlayer.canRedrawThisTurn}
           onPass={handlePass}
+          onRedraw={handleRedraw}
           onEndTurn={handleEndTurn}
         />
       )}

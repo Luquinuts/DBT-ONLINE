@@ -114,41 +114,28 @@ export function CharacterCard({
         </span>
       </div>
 
-      {/* ─── Advance counter ────────────────────────────────── */}
-      <div className="flex items-center gap-1 px-3 pt-1">
-        <span className="text-[10px] text-gray-500 font-medium">ADV:</span>
-        {canAttack ? (
-          <span className="flex items-center gap-1 text-xs font-semibold text-green-400">
-            ✅ LISTO
-            <span className="text-[10px] text-gray-500 font-normal">
-              ({character.advanceCounter})
+      {/* ─── Advance counter (progress bar) ─────────────────── */}
+      <div className="px-3 pt-1">
+        <div className="flex items-center justify-between mb-0.5">
+          <span className="text-[11px] text-gray-400 font-medium">AVANCE</span>
+          {canAttack ? (
+            <span className="text-[11px] font-semibold text-green-400">✅ LISTO</span>
+          ) : (
+            <span className="text-[11px] text-yellow-400 font-semibold">
+              {character.advanceCounter}/{character.currentLentitud}
             </span>
-          </span>
-        ) : (
-          <>
-            <span className="text-xs font-bold text-yellow-400">
-              {character.advanceCounter}
-            </span>
-            <span className="text-[10px] text-gray-600">/</span>
-            <span className="text-xs text-gray-400">
-              {character.currentLentitud}
-            </span>
-            <div className="flex gap-0.5 ml-1">
-              {Array.from({ length: character.currentLentitud }).map((_, i) => (
-                <span
-                  key={i}
-                  className={`text-xs ${
-                    i < character.advanceCounter
-                      ? 'text-yellow-400'
-                      : 'text-gray-700'
-                  }`}
-                >
-                  ●
-                </span>
-              ))}
-            </div>
-          </>
-        )}
+          )}
+        </div>
+        <div className="w-full h-1.5 rounded-full bg-gray-700/60 overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all duration-300 ${
+              canAttack ? 'bg-green-500' : 'bg-yellow-500'
+            }`}
+            style={{
+              width: `${Math.min(100, (character.advanceCounter / Math.max(1, character.currentLentitud)) * 100)}%`,
+            }}
+          />
+        </div>
       </div>
 
       {/* ─── Shield / Rage icons ──────────────────────────── */}
