@@ -94,6 +94,20 @@ export function registerGameHandlers(
       });
     }
   });
+
+  // ── game:request_sync ───────────────────────────────────────
+  socket.on('game:request_sync', (roomCode: string) => {
+    try {
+      const engine = gameRegistry.getGame(roomCode);
+      if (engine) {
+        const state = engine.getState();
+        socket.emit('game:state_update', state);
+        console.log(`[game:request_sync] synced ${roomCode} — phase ${state.phase}`);
+      }
+    } catch (err) {
+      console.error('[game:request_sync] error:', err);
+    }
+  });
 }
 
 // ─── Handler implementations ────────────────────────────────────

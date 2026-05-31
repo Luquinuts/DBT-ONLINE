@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { connect, disconnect, getSocket } from './socket';
+import { connect, getSocket } from './socket';
 import type { Room, Player, RoomEvent } from '@dbt-online/shared';
 
 interface RoomState {
@@ -81,7 +81,6 @@ export function useRoom() {
       socket.off('room:updated', onRoomUpdated);
       socket.off('room:event', onRoomEvent);
       socket.off('room:error', onError);
-      disconnect();
     };
   }, []);
 

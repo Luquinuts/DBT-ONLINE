@@ -20,6 +20,7 @@ export interface ClientToServerEvents {
   // Juego
   'game:action': (data: { roomCode: string; action: GameAction }) => void;
   'game:defender_response': (data: { roomCode: string; action: GameAction }) => void;
+  'game:request_sync': (roomCode: string) => void;
 }
 
 // ─── Eventos Servidor → Cliente ────────────────────────────────

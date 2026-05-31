@@ -74,6 +74,9 @@ export function useGame(
       socket.connect();
     }
 
+    // Pedir estado actual al montar — cubre navegación desde el lobby
+    socket.emit('game:request_sync', roomCode);
+
     const onStateUpdate = (gameState: GameState) => {
       dispatch({ type: 'SET_GAME_STATE', payload: gameState, playerId });
     };
@@ -86,6 +89,11 @@ export function useGame(
     };
 
     const onError = (error: GameError) => {
+      // Si la sala no se encuentra por empezar dos veces, pedir sync
+      if (error.code === 'ROOM_NOT_FOUND' || error.code === 'NOT_ENOUGH_PLAYERS' || error.code === 'NOT_HOST') {
+        socket.emit('game:request_sync', roomCode);
+        return;
+      }
       dispatch({ type: 'SET_ERROR', payload: error });
     };
 
