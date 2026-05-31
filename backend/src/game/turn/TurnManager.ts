@@ -88,6 +88,7 @@ export class TurnManager {
 
     // Increment advance counter
     character.advanceCounter++;
+    character.hasAttackedThisTurn = true; // cannot attack the SAME turn after advancing
     state.getCurrentPlayer().hasAdvancedThisTurn = true;
 
     state.addLog(

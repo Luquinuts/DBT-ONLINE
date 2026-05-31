@@ -7,6 +7,7 @@ import type { UseGameReturn } from '@/lib/useGame';
 import { FieldArea } from './FieldArea';
 import { HandArea } from './HandArea';
 import { ActionBar } from './ActionBar';
+import { CardPlayPanel } from './CardPlayPanel';
 import { BattlefieldDisplay } from './BattlefieldDisplay';
 import { GameLog } from './GameLog';
 import './card-effects.css';
@@ -237,6 +238,13 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
     actions.redraw();
   }, [actions]);
 
+  const handlePlaySelectedCard = useCallback(() => {
+    if (!selectedCard) return;
+    actions.playCard(selectedCard, selectedCharacter ?? undefined);
+    actions.selectCard(null);
+    actions.selectCharacter(null);
+  }, [selectedCard, selectedCharacter, actions]);
+
   const handleEndTurn = useCallback(() => {
     actions.endTurn();
   }, [actions]);
@@ -352,6 +360,20 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
           onPass={handlePass}
           onRedraw={handleRedraw}
           onEndTurn={handleEndTurn}
+        />
+      )}
+
+      {/* ─── Card play confirmation panel ──────────────────── */}
+      {currentPlayer && phase === 'WAITING_FOR_ACTION' && selectedCard && (
+        <CardPlayPanel
+          cardId={selectedCard}
+          phase={phase}
+          selectedCharacter={selectedCharacter}
+          onPlay={handlePlaySelectedCard}
+          onCancel={() => {
+            actions.selectCard(null);
+            actions.selectCharacter(null);
+          }}
         />
       )}
 

@@ -21,6 +21,13 @@ interface FieldAreaProps {
   isDefending?: boolean;
 }
 
+// Characters that actually have a habilidad defined
+const CHARACTERS_WITH_HABILIDAD = new Set([
+  'ssj-god-goku', 'golden-frieza', 'hit', 'ssj2-gohan',
+  'piccolo', 'jiren', 'ssj-future-trunks', 'ssj-goku',
+  'ssj-rose-black-goku',
+]);
+
 export function FieldArea({
   characters,
   isPlayer,
@@ -86,7 +93,7 @@ export function FieldArea({
             canTarget={targetMap[char.characterId] ?? false}
             showActions={isPlayer}
             onClick={() => onCharacterClick(char.characterId)}
-            onAbility={() => onAbility(char.characterId)}
+            onAbility={CHARACTERS_WITH_HABILIDAD.has(char.characterId) ? () => onAbility(char.characterId) : undefined}
             onDefinitiva={() => onDefinitiva(char.characterId)}
             battlefieldEffect={battlefieldEffect}
             isDefending={isDefending}

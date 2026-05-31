@@ -46,8 +46,10 @@ export function validPhasesForAction(actionType: GameAction['type']): GamePhase[
       return ['DRAFT'];
 
     case 'PLAY_CARD':
-    case 'USE_HABILIDAD':
       return ['WAITING_FOR_ACTION'];
+
+    case 'USE_HABILIDAD':
+      return ['WAITING_FOR_ACTION', 'DEFENDER_RESPONSE'];
 
     case 'ADVANCE':
       return ['ADVANCE'];

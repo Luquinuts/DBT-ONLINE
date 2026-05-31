@@ -2,6 +2,8 @@
 
 import type { CharacterState } from '@dbt-online/shared';
 import { CHARACTER_DISPLAY } from '@/data/character-display';
+import { getCharacterImageSrc } from '@/lib/assets';
+import { GameImage } from './GameImage';
 import { HpBar } from './HpBar';
 
 interface CharacterCardProps {
@@ -77,6 +79,15 @@ export function CharacterCard({
       `}
       style={{ backgroundColor: charDef.color + '20' }}
     >
+      {/* ─── Character art background ─────────────────────── */}
+      <GameImage
+        src={getCharacterImageSrc(character.characterId)}
+        alt={charDef.displayName}
+        className="absolute inset-0 w-full h-full object-cover opacity-60"
+        fallback={null}
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/30 pointer-events-none" />
+
       {/* ─── Dead overlay ─────────────────────────────────── */}
       {isDead && (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60">

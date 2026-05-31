@@ -78,13 +78,16 @@ export function DefenderResponseModal({
   // Attacker display (from static data, we don't have runtime state for opponent here)
   const attackerDisplay = CHARACTER_DISPLAY[attackerId];
 
-  // Check esquive availability
-  const hasEsquiveCard = playerHand.includes('esquive');
+  // Check esquive availability — cards are created as esquive_1, esquive_2, etc.
+  const esquiveCardId = playerHand.find((id) => id.startsWith('esquive'));
+  const hasEsquiveCard = !!esquiveCardId;
   const isDefinitiva = attackType === 'DEFINITIVA';
   const canEsquive = hasEsquiveCard && !isDefinitiva;
 
-  // Check shield
-  const hasShield = targetChar?.shieldEquipped ?? false;
+  // Check shield — either already equipped or a shield card in hand to play
+  const shieldCardId = playerHand.find((id) => id.startsWith('escudo'));
+  const hasShieldEquipped = targetChar?.shieldEquipped ?? false;
+  const canUseShield = hasShieldEquipped || !!shieldCardId;
 
   // Button state descriptions
   let esquiveLabel = 'ESQUIVE';
@@ -167,7 +170,7 @@ export function DefenderResponseModal({
                     {targetChar?.currentVida ?? '?'}/{targetChar?.maxVida ?? '?'}
                   </span>
                 </div>
-                {hasShield && (
+                {hasShieldEquipped && (
                   <span className="mt-1 inline-block rounded bg-yellow-600/40 px-2 py-0.5 text-[10px] text-yellow-300">
                     🛡️ Escudo equipado
                   </span>
@@ -194,7 +197,7 @@ export function DefenderResponseModal({
             <button
               type="button"
               disabled={esquiveDisabled}
-              onClick={() => handleRespond('ESQUIVE', targetId, 'esquive')}
+              onClick={() => handleRespond('ESQUIVE', targetId, esquiveCardId)}
               className={`flex flex-col items-center gap-1 rounded-xl px-4 py-3 text-sm font-semibold transition active:scale-95 ${
                 esquiveDisabled
                   ? 'bg-gray-800/50 text-gray-600 cursor-not-allowed border border-gray-700/30'
@@ -208,16 +211,16 @@ export function DefenderResponseModal({
             {/* ESCUDO */}
             <button
               type="button"
-              disabled={!hasShield}
-              onClick={() => handleRespond('ESCUDO', targetId)}
+              disabled={!canUseShield}
+              onClick={() => handleRespond('ESCUDO', targetId, shieldCardId)}
               className={`flex flex-col items-center gap-1 rounded-xl px-4 py-3 text-sm font-semibold transition active:scale-95 ${
-                !hasShield
+                !canUseShield
                   ? 'bg-gray-800/50 text-gray-600 cursor-not-allowed border border-gray-700/30'
                   : 'bg-indigo-600/60 text-white border border-indigo-500/30 hover:bg-indigo-500/70 shadow-md'
               }`}
             >
               <span className="text-xl">🛡️</span>
-              <span>ESCUDO</span>
+                <span>{hasShieldEquipped ? 'ESCUDO' : 'JUGAR ESCUDO'}</span>
             </button>
 
             {/* USE ABILITY */}
