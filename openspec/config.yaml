@@ -1,0 +1,51 @@
+# openspec/config.yaml
+schema: spec-driven
+
+context: |
+  Project: DBT-ONLINE — Dragon Ball Tournament online card game
+  Stack: TypeScript monorepo via npm workspaces
+    - frontend/  — Next.js 15 + React 19 + Tailwind CSS v4 + socket.io-client
+    - backend/   — Express 5 + Socket.IO 4 + Supabase (PostgreSQL)
+    - shared/    — Common types (card, game, profile, room, socket)
+  Architecture: Dual-process (Next.js SSR + Express API/Socket.IO server).
+    No API routes in Next.js — all real-time via Socket.IO on Express.
+    Supabase for auth, DB, and real-time subscriptions.
+  Dev runner: tsx (backend), next dev (frontend), concurrently for parallel dev.
+  Persistence: openspec (file-based)
+
+testing:
+  runner: null
+  layers:
+    unit: false
+    integration: false
+    e2e: false
+  coverage: false
+  tools:
+    linter: next lint (frontend) / tsc --noEmit (backend)
+    type_checker: tsc --noEmit (used as lint for backend), TypeScript strict: true all packages
+    formatter: null
+  strict_tdd: false
+  note: No test dependencies, test files, or CI pipeline found. Enable testing before setting strict_tdd.
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+  apply:
+    - Follow existing code patterns
+    tdd: false
+    test_command: ""
+  verify:
+    test_command: ""
+    build_command: "npm run build"
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas

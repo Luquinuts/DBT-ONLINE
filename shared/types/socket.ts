@@ -1,5 +1,5 @@
 import type { Room, Player, RoomEvent } from './room';
-import type { GameState, GameAction, ActionResult } from './game';
+import type { GameState, GameAction, GameError, PendingAttack } from './game';
 import type { UserPresence } from './profile';
 
 // ─── Eventos Cliente → Servidor ────────────────────────────────
@@ -14,11 +14,12 @@ export interface ClientToServerEvents {
   }) => void;
   'room:join': (data: { code: string; playerName: string }) => void;
   'room:leave': () => void;
-  'room:start_game': () => void;
+  'room:start_game': (roomCode: string) => void;
   'room:public_listing': () => void;
 
   // Juego
-  'game:action': (data: GameAction) => void;
+  'game:action': (data: { roomCode: string; action: GameAction }) => void;
+  'game:defender_response': (data: { roomCode: string; action: GameAction }) => void;
 }
 
 // ─── Eventos Servidor → Cliente ────────────────────────────────
@@ -44,8 +45,10 @@ export interface ServerToClientEvents {
   'presence:friends': (data: { presences: UserPresence[] }) => void;
 
   // Juego
-  'game:state': (data: GameState) => void;
-  'game:action_result': (data: ActionResult) => void;
+  'game:state_update': (state: GameState) => void;
+  'game:error': (error: GameError) => void;
+  'game:over': (state: GameState) => void;
+  'game:defender_window': (data: { pendingAttack: PendingAttack; timeoutMs: number }) => void;
 }
 
 // ─── Eventos Internos (sin cliente) ────────────────────────────

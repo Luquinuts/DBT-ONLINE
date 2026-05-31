@@ -6,6 +6,8 @@ import { v4 as uuid } from 'uuid';
 import { supabase } from './db/client';
 import { getAuthClient } from './db/auth-client';
 import friendsRouter from './routes/friends';
+import { registerGameHandlers, handleGameDisconnect } from './game/gameSocketHandlers';
+import { gameRegistry } from './game/GameRegistry';
 import type {
   ClientToServerEvents,
   ServerToClientEvents,
@@ -231,6 +233,9 @@ io.on('connection', async (socket) => {
     }
   }
 
+  // ── Game event handlers ──────────────────────────────────
+  registerGameHandlers(io, socket, rooms);
+
   // ── Crear sala ─────────────────────────────────────────────
   socket.on('room:create', ({ name, playerName, maxPlayers, isPublic = true }) => {
     const code = generateCode();
@@ -370,6 +375,12 @@ io.on('connection', async (socket) => {
   socket.on('disconnect', () => {
     console.log(`[disconnect] ${socket.id}`);
     handleLeave(socket);
+
+    // ── Game cleanup on disconnect ───────────────────────────
+    const dcPlayerId = socket.data.playerId || socket.id;
+    if (handleGameDisconnect(io, dcPlayerId)) {
+      console.log(`[game:disconnect] game cleaned up for ${dcPlayerId.slice(0, 8)}`);
+    }
 
     // Presencia: remover y notificar amigos
     if (userId) {
