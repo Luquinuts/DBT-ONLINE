@@ -6,6 +6,9 @@ import { v4 as uuid } from 'uuid';
 import { supabase } from './db/client';
 import { getAuthClient } from './db/auth-client';
 import friendsRouter from './routes/friends';
+import { CHARACTERS } from './data/characters';
+import { BATTLEFIELDS } from './data/battlefields';
+import { createDefaultDeck } from './data/deck';
 import { registerGameHandlers, handleGameDisconnect } from './game/gameSocketHandlers';
 import { gameRegistry } from './game/GameRegistry';
 import type {
@@ -164,6 +167,25 @@ app.get('/health', (_req, res) => {
 // ─── Rutas REST ─────────────────────────────────────────────────
 
 app.use('/api/friends', friendsRouter);
+
+// ─── API de datos del juego (catálogo) ──────────────────────────
+
+app.get('/api/data', (_req, res) => {
+  // Cards: deduplicate by effect base + name, keeping first occurrence
+  const seen = new Set<string>();
+  const uniqueCards = createDefaultDeck().filter((c) => {
+    const key = `${c.name}::${c.effect}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  res.json({
+    characters: CHARACTERS,
+    battlefields: BATTLEFIELDS,
+    cards: uniqueCards,
+  });
+});
 
 // Auth check básico
 app.get('/api/me', async (req, res) => {

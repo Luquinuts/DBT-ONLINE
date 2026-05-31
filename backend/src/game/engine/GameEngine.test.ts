@@ -329,17 +329,11 @@ describe('GameEngine Integration', () => {
       const s = engine.getState();
 
       // ── Ensure P2 has an esquive card in hand ──
-      const p2Hand = s.players[1].hand;
-      let esquiveCard = p2Hand.find((id) => id.startsWith('esquive'));
-      if (!esquiveCard) {
-        const removed = p2Hand.pop()!;
-        p2Hand.push('esquive_1');
-        s.players[1].discardPile.push(removed);
-        esquiveCard = 'esquive_1';
-      }
+      // engine.getState() returns a DEEP CLONE, so we access the internal state directly
+      ;(engine as any).state.getState().players[1].hand.push('esquive_1');
+      const esquiveCard = 'esquive_1';
 
       // ── Manually set P1's first alive character to be attack-ready ──
-      // Set advanceCounter equal to currentLentitud so they can attack immediately
       const p1Char = s.players[0].characters.find(c => c.isAlive);
       expect(p1Char).toBeDefined();
 

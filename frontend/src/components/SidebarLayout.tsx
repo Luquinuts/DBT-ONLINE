@@ -7,6 +7,7 @@ import type { ReactNode } from 'react';
 
 const links = [
   { href: '/', label: 'Jugar', icon: '🎮' },
+  { href: '/catalog', label: 'Catálogo', icon: '📖' },
   { href: '/friends', label: 'Amigos', icon: '👥' },
   { href: '/account', label: 'Cuenta', icon: '👤' },
   { href: '/settings', label: 'Ajustes', icon: '⚙️' },
