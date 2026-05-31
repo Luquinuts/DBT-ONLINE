@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import SidebarLayout from '@/components/SidebarLayout';
 import { useRoom } from '@/lib/useRoom';
 import { useProfile } from '@/lib/useProfile';
@@ -19,6 +20,7 @@ interface PublicRoom {
 type View = 'home' | 'create' | 'join' | 'lobby';
 
 export default function GamePage() {
+  const router = useRouter();
   const { profile } = useProfile();
   const {
     room,
@@ -43,6 +45,14 @@ export default function GamePage() {
       setPlayerName(profile.username);
     }
   }, [profile, playerName, setPlayerName]);
+
+  // Navegar a la página de juego cuando arranca la partida
+  useEffect(() => {
+    const lastEvent = events[events.length - 1];
+    if (lastEvent?.type === 'game_started' && room?.code) {
+      router.push(`/game?roomCode=${room.code}`);
+    }
+  }, [events, room?.code, router]);
 
   // ─── Salas públicas ──────────────────────────────────────────
 
@@ -96,12 +106,19 @@ export default function GamePage() {
 
           {/* ─── LOBBY ─────────────────────────── */}
           {inLobby && room && player && (
-            <LobbyView
-              room={room}
-              player={player}
-              events={events}
-              onLeave={leaveRoom}
-            />
+              <LobbyView
+                room={room}
+                player={player}
+                events={events}
+                onLeave={leaveRoom}
+                onStartGame={() => {
+                  const socket = getSocket();
+                  if (socket?.connected) {
+                    socket.emit('room:start_game', room.code);
+                    router.push(`/game?roomCode=${room.code}&host=true`);
+                  }
+                }}
+              />
           )}
 
           {/* ─── HOME ──────────────────────────── */}
@@ -278,11 +295,13 @@ function LobbyView({
   player,
   events,
   onLeave,
+  onStartGame,
 }: {
   room: Room;
   player: Player;
   events: RoomEvent[];
   onLeave: () => void;
+  onStartGame: () => void;
 }) {
   const isHost = player.isHost;
   const playerCount = room.players.length;
@@ -327,7 +346,10 @@ function LobbyView({
       </div>
 
       {isHost && playerCount >= 2 ? (
-        <button className="w-full rounded-lg bg-green-600 px-6 py-3 font-semibold text-white transition hover:bg-green-500">
+        <button
+          onClick={onStartGame}
+          className="w-full rounded-lg bg-green-600 px-6 py-3 font-semibold text-white transition hover:bg-green-500"
+        >
           Iniciar Partida
         </button>
       ) : (

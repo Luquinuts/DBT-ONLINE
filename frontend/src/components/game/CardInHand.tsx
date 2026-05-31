@@ -1,0 +1,92 @@
+'use client';
+
+import { CARD_DISPLAY } from '@/data/card-display';
+
+interface CardInHandProps {
+  cardId: string;
+  isPlayable: boolean;
+  isSelected: boolean;
+  onClick: () => void;
+}
+
+export function CardInHand({
+  cardId,
+  isPlayable,
+  isSelected,
+  onClick,
+}: CardInHandProps) {
+  const cardInfo = CARD_DISPLAY[cardId];
+
+  if (!cardInfo) {
+    return (
+      <div className="flex h-28 w-20 flex-col items-center justify-center rounded-lg border border-gray-700 bg-gray-800/60 p-1">
+        <span className="text-[10px] text-gray-500">{cardId}</span>
+      </div>
+    );
+  }
+
+  const borderColor = cardInfo.color;
+  const isItem = cardInfo.type === 'ITEM';
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={!isPlayable}
+      className={`
+        group relative flex h-28 w-20 shrink-0 flex-col overflow-hidden rounded-lg border-2
+        bg-gradient-to-b from-white/10 to-white/5
+        transition-all duration-200
+        hover:-translate-y-5 hover:scale-110 hover:shadow-lg hover:z-20
+        ${
+          isSelected
+            ? 'border-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.6)] z-10'
+            : isPlayable
+              ? 'border-gray-600 hover:border-gray-400 cursor-pointer'
+              : 'border-gray-700 cursor-not-allowed'
+        }
+        ${!isPlayable ? 'opacity-50 grayscale' : ''}
+      `}
+      style={{ borderColor: isSelected ? undefined : borderColor + '60' }}
+    >
+      {/* Non-playable overlay */}
+      {!isPlayable && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/30">
+          <span className="text-lg font-bold text-red-400">✕</span>
+        </div>
+      )}
+
+      {/* Type indicator top */}
+      <div className="flex items-center justify-center pt-2">
+        <span className="text-lg">{cardInfo.icon}</span>
+      </div>
+
+      {/* Card name */}
+      <div className="flex-1 flex items-center justify-center px-1">
+        <span
+          className="text-[10px] font-semibold text-center leading-tight text-white"
+          style={{
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+          }}
+        >
+          {cardInfo.displayName}
+        </span>
+      </div>
+
+      {/* Effect text */}
+      <div className="px-1 pb-1.5">
+        <p className="text-[8px] text-gray-400 leading-tight text-center line-clamp-2">
+          {cardInfo.effect}
+        </p>
+      </div>
+
+      {/* Item vs Action indicator */}
+      <div
+        className={`absolute bottom-0 left-0 right-0 h-1 ${isItem ? 'bg-orange-500/50' : 'bg-blue-500/50'}`}
+      />
+    </button>
+  );
+}

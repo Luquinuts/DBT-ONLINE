@@ -13,3 +13,73 @@ body {
   color: var(--color-text);
   min-height: 100vh;
 }
+
+/* ─── Animation Keyframes ─────────────────────────────────────── */
+
+@keyframes fade-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes slide-down {
+  0% { transform: translate(-50%, -100%); opacity: 0; }
+  100% { transform: translate(-50%, 0); opacity: 1; }
+}
+
+@keyframes card-fly {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  50% { transform: translate(var(--fly-x, 100px), var(--fly-y, -200px)) scale(1.2); opacity: 1; }
+  100% { transform: translate(var(--fly-end-x, 200px), var(--fly-end-y, -400px)) scale(0.8); opacity: 0; }
+}
+
+@keyframes projectile {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  80% { transform: translate(var(--proj-x, 100px), var(--proj-y, -200px)) scale(1.5); opacity: 1; }
+  100% { transform: translate(var(--proj-end-x, 200px), var(--proj-end-y, -400px)) scale(0); opacity: 0; }
+}
+
+@keyframes damage-float {
+  0% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(-40px); opacity: 0; }
+}
+
+@keyframes damage-flash {
+  0% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.5); }
+  50% { box-shadow: 0 0 20px 10px rgba(255, 0, 0, 0.3); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0); }
+}
+
+@keyframes card-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.7; }
+}
+
+/* ─── Animation utility classes ───────────────────────────────── */
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.animate-slide-down {
+  animation: slide-down 0.3s ease-out;
+}
+
+.animate-card-fly {
+  animation: card-fly 0.6s ease-in-out forwards;
+}
+
+.animate-projectile {
+  animation: projectile 0.4s ease-in-out forwards;
+}
+
+.animate-damage-float {
+  animation: damage-float 1s ease-out forwards;
+}
+
+.animate-damage-flash {
+  animation: damage-flash 0.5s ease-out;
+}
+
+.animate-card-pulse {
+  animation: card-pulse 0.4s ease-in-out;
+}
