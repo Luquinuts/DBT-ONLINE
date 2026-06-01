@@ -124,9 +124,12 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
           character.advanceCounter >= character.currentLentitud &&
           !character.hasAttackedThisTurn;
 
+        const canCardTarget =
+          phase === 'WAITING_FOR_ACTION' && selectedCard !== null;
+
         return {
           isEligible: canAdvance || canActAsAttacker,
-          canTarget: false,
+          canTarget: canCardTarget,
         };
       }
 
@@ -188,7 +191,15 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
 
       // Player side
       if (isPlayerSide) {
-        // In ADVANCE or WAITING_FOR_ACTION: open modal instead of direct action
+        // In WAITING_FOR_ACTION with a card selected: toggle as card target
+        if (phase === 'WAITING_FOR_ACTION' && selectedCard) {
+          actions.selectCharacter(
+            selectedCharacter === characterId ? null : characterId,
+          );
+          return;
+        }
+
+        // In ADVANCE or WAITING_FOR_ACTION (no card selected): open modal
         if (phase === 'ADVANCE' || phase === 'WAITING_FOR_ACTION') {
           setModalCharacterId(characterId);
           return;

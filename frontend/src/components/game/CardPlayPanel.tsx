@@ -27,7 +27,7 @@ export function CardPlayPanel({
 
   const needsTarget =
     cardInfo.type === 'ITEM' ||
-    ['semilla_senzu', 'plus_vida', 'nube_kinton', 'baculo_sagrado', 'rage', 'esfera_dragon'].some((k) =>
+    ['semilla_senzu', 'plus_vida', 'nube_kinton', 'baculo_sagrado', 'rage', 'esfera_dragon', 'escudo'].some((k) =>
       baseCardId.startsWith(k),
     );
 
