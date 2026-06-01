@@ -99,6 +99,22 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
   }, [state.gameState?.turnLog, state.flyingCard, state.attackAnimation, actions]);
 
   // ─── Derive per-character eligibility --------------------------
+
+  /** Returns 'ally', 'enemy', or null if the card doesn't need a target. */
+  function getCardTargetSide(cardId: string | null): 'ally' | 'enemy' | null {
+    if (!cardId) return null;
+    const base = cardId.replace(/_\d+$/, '');
+    // Cards that target YOUR characters
+    const allyCards = ['plus_vida', 'escudo', 'semilla_senzu', 'nube_kinton', 'rage', 'esfera_dragon'];
+    if (allyCards.some((c) => base === c)) return 'ally';
+    // Cards that target OPPONENT characters
+    const enemyCards = ['baculo_sagrado'];
+    if (enemyCards.some((c) => base === c)) return 'enemy';
+    return null;
+  }
+
+  const cardTargetSide = getCardTargetSide(selectedCard);
+
   const computeFieldState = useCallback(
     (characterId: string, isPlayerSide: boolean) => {
       if (!phase || !isMyTurn) {
@@ -125,7 +141,9 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
           !character.hasAttackedThisTurn;
 
         const canCardTarget =
-          phase === 'WAITING_FOR_ACTION' && selectedCard !== null;
+          phase === 'WAITING_FOR_ACTION' &&
+          selectedCard !== null &&
+          cardTargetSide !== 'enemy';
 
         return {
           isEligible: canAdvance || canActAsAttacker,
@@ -146,6 +164,7 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
       if (
         phase === 'WAITING_FOR_ACTION' &&
         selectedCard !== null &&
+        cardTargetSide !== 'ally' &&
         character.isAlive
       ) {
         return { isEligible: false, canTarget: true };
@@ -153,7 +172,7 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
 
       return { isEligible: false, canTarget: false };
     },
-    [phase, isMyTurn, currentPlayer, opponent, selectedCharacter, selectedCard],
+    [phase, isMyTurn, currentPlayer, opponent, selectedCharacter, selectedCard, cardTargetSide],
   );
 
   const playerEligibilityMap = useMemo(() => {
@@ -164,7 +183,13 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
     return map;
   }, [currentPlayer, computeFieldState]);
 
-  const playerTargetMap: Record<string, boolean> = {};
+  const playerTargetMap = useMemo(() => {
+    const map: Record<string, boolean> = {};
+    currentPlayer?.characters.forEach((c) => {
+      map[c.characterId] = computeFieldState(c.characterId, true).canTarget;
+    });
+    return map;
+  }, [currentPlayer, computeFieldState]);
 
   const opponentEligibilityMap: Record<string, boolean> = {};
   const opponentTargetMap = useMemo(() => {
@@ -236,15 +261,15 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
         return;
       }
 
-      // Opponent side: select as card target in WAITING_FOR_ACTION
-      if (phase === 'WAITING_FOR_ACTION' && selectedCard) {
+      // Opponent side: select as card target in WAITING_FOR_ACTION (only for enemy-targeting cards)
+      if (phase === 'WAITING_FOR_ACTION' && selectedCard && cardTargetSide === 'enemy') {
         actions.selectCharacter(
           selectedCharacter === characterId ? null : characterId,
         );
         return;
       }
     },
-    [isMyTurn, phase, currentPlayer, opponent, selectedCharacter, selectedCard, actions],
+    [isMyTurn, phase, currentPlayer, opponent, selectedCharacter, selectedCard, cardTargetSide, actions],
   );
 
   const handleAbility = useCallback(
