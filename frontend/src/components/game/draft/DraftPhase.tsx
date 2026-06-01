@@ -6,6 +6,7 @@ import { DraftStatus } from './DraftStatus';
 import { CharacterPickCard } from './CharacterPickCard';
 import { PlaceOrderArea } from './PlaceOrderArea';
 import { CHARACTER_DISPLAY } from '@/data/character-display';
+import { getBackgroundSrc } from '@/lib/assets';
 
 interface Props {
   state: GameUIState;
@@ -26,8 +27,11 @@ export function DraftPhase({ state, actions }: Props) {
   const opponentPicks = draftPicks[1 - playerIndex] || [];
 
   return (
-    <div className="flex flex-col items-center p-4">
-      <h1 className="mb-2 text-2xl font-bold text-white">
+    <div
+      className="flex min-h-screen flex-col items-center bg-cover bg-center p-4"
+      style={{ backgroundImage: `url(${getBackgroundSrc('character-selection')})` }}
+    >
+      <h1 className="mb-2 text-2xl font-bold text-white drop-shadow-lg">
         Selección de Personajes
       </h1>
 
@@ -35,8 +39,8 @@ export function DraftPhase({ state, actions }: Props) {
 
       {/* Pick grid */}
       {(draftPhase === 'PICKING' || !draftPhase) && (
-        <div className="mb-6">
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+        <div className="mb-6 w-full max-w-2xl">
+          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5">
             {draftAvailable.map((charId) => {
               const isSelected =
                 myPicks.includes(charId) || opponentPicks.includes(charId);
@@ -57,7 +61,7 @@ export function DraftPhase({ state, actions }: Props) {
       {/* Picks display */}
       <div className="flex w-full max-w-md gap-8">
         {/* My picks */}
-        <div className="flex-1 rounded-lg border border-gray-700 bg-gray-800/40 p-3">
+        <div className="flex-1 rounded-lg border border-gray-700 bg-black/60 p-3 backdrop-blur-sm">
           <h3 className="mb-2 text-center text-xs font-semibold text-gray-400 uppercase tracking-wide">
             Tus personajes
           </h3>
@@ -78,7 +82,7 @@ export function DraftPhase({ state, actions }: Props) {
         </div>
 
         {/* Opponent picks */}
-        <div className="flex-1 rounded-lg border border-gray-700 bg-gray-800/40 p-3">
+        <div className="flex-1 rounded-lg border border-gray-700 bg-black/60 p-3 backdrop-blur-sm">
           <h3 className="mb-2 text-center text-xs font-semibold text-gray-400 uppercase tracking-wide">
             Rival
           </h3>
