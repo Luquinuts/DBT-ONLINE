@@ -386,88 +386,96 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
         </div>
       )}
 
-      {/* ─── Opponent field ────────────────────────────────────── */}
-      {opponent && phase && (
-        <FieldArea
-          characters={opponent.characters}
-          isPlayer={false}
-          playerData={opponent}
-          playerKi={currentPlayer?.ki ?? 0}
-          selectedCharacter={selectedCharacter}
-          phase={phase}
-          onCharacterClick={(id) => handleCharacterClick(id, false)}
-          eligibilityMap={opponentEligibilityMap}
-          targetMap={opponentTargetMap}
-        />
-      )}
+      {/* ─── Battlefield (left) + Game content (right) ────────── */}
+      <div className="flex flex-1 gap-4">
+        {/* Left: Battlefield TCG card — vertically centered */}
+        <div className="hidden md:flex flex-col justify-center">
+          <BattlefieldDisplay
+            battlefield={battlefield}
+            isNullified={false}
+          />
+        </div>
 
-      {/* ─── Battlefield ────────────────────────────────────────── */}
-      <BattlefieldDisplay
-        battlefield={battlefield}
-        isNullified={false}
-      />
+        {/* Right: main game column */}
+        <div className="flex flex-1 flex-col gap-3 min-w-0">
+          {/* ─── Opponent field ──────────────────────────────── */}
+          {opponent && phase && (
+            <FieldArea
+              characters={opponent.characters}
+              isPlayer={false}
+              playerData={opponent}
+              playerKi={currentPlayer?.ki ?? 0}
+              selectedCharacter={selectedCharacter}
+              phase={phase}
+              onCharacterClick={(id) => handleCharacterClick(id, false)}
+              eligibilityMap={opponentEligibilityMap}
+              targetMap={opponentTargetMap}
+            />
+          )}
 
-      {/* ─── Player field ──────────────────────────────────────── */}
-      {currentPlayer && phase && (
-        <FieldArea
-          characters={currentPlayer.characters}
-          isPlayer={true}
-          playerData={currentPlayer}
-          playerKi={currentPlayer.ki}
-          selectedCharacter={selectedCharacter}
-          phase={phase}
-          onCharacterClick={(id) => handleCharacterClick(id, true)}
-          eligibilityMap={playerEligibilityMap}
-          targetMap={playerTargetMap}
-        />
-      )}
+          {/* ─── Action bar ──────────────────────────────────── */}
+          {currentPlayer && phase && (
+            <ActionBar
+              phase={phase}
+              isMyTurn={isMyTurn}
+              playerKi={currentPlayer.ki}
+              deckCount={currentPlayer.deck.length}
+              discardCount={currentPlayer.discardPile.length}
+              ultimateUses={currentPlayer.ultimateUsesRemaining}
+              hasAdvancedThisTurn={currentPlayer.hasAdvancedThisTurn}
+              hasPlayedEquipableThisTurn={currentPlayer.hasPlayedEquipableThisTurn}
+              canRedrawThisTurn={currentPlayer.canRedrawThisTurn}
+              onPass={handlePass}
+              onRedraw={handleRedraw}
+              onEndTurn={handleEndTurn}
+            />
+          )}
 
-      {/* ─── Action bar ────────────────────────────────────────── */}
-      {currentPlayer && phase && (
-        <ActionBar
-          phase={phase}
-          isMyTurn={isMyTurn}
-          playerKi={currentPlayer.ki}
-          deckCount={currentPlayer.deck.length}
-          discardCount={currentPlayer.discardPile.length}
-          ultimateUses={currentPlayer.ultimateUsesRemaining}
-          hasAdvancedThisTurn={currentPlayer.hasAdvancedThisTurn}
-          hasPlayedEquipableThisTurn={currentPlayer.hasPlayedEquipableThisTurn}
-          canRedrawThisTurn={currentPlayer.canRedrawThisTurn}
-          onPass={handlePass}
-          onRedraw={handleRedraw}
-          onEndTurn={handleEndTurn}
-        />
-      )}
+          {/* ─── Player field ────────────────────────────────── */}
+          {currentPlayer && phase && (
+            <FieldArea
+              characters={currentPlayer.characters}
+              isPlayer={true}
+              playerData={currentPlayer}
+              playerKi={currentPlayer.ki}
+              selectedCharacter={selectedCharacter}
+              phase={phase}
+              onCharacterClick={(id) => handleCharacterClick(id, true)}
+              eligibilityMap={playerEligibilityMap}
+              targetMap={playerTargetMap}
+            />
+          )}
 
-      {/* ─── Card play confirmation panel ──────────────────── */}
-      {currentPlayer && phase === 'WAITING_FOR_ACTION' && selectedCard && (
-        <CardPlayPanel
-          cardId={selectedCard}
-          phase={phase}
-          selectedCharacter={selectedCharacter}
-          onPlay={handlePlaySelectedCard}
-          onCancel={() => {
-            actions.selectCard(null);
-            actions.selectCharacter(null);
-          }}
-        />
-      )}
+          {/* ─── Card play confirmation panel ──────────────── */}
+          {currentPlayer && phase === 'WAITING_FOR_ACTION' && selectedCard && (
+            <CardPlayPanel
+              cardId={selectedCard}
+              phase={phase}
+              selectedCharacter={selectedCharacter}
+              onPlay={handlePlaySelectedCard}
+              onCancel={() => {
+                actions.selectCard(null);
+                actions.selectCharacter(null);
+              }}
+            />
+          )}
 
-      {/* ─── Hand area ──────────────────────────────────────────── */}
-      {currentPlayer && (
-        <HandArea
-          hand={currentPlayer.hand}
-          isPlayable={isHandPlayable}
-          selectedCard={selectedCard}
-          onCardClick={handleCardClick}
-        />
-      )}
+          {/* ─── Hand area ──────────────────────────────────── */}
+          {currentPlayer && (
+            <HandArea
+              hand={currentPlayer.hand}
+              isPlayable={isHandPlayable}
+              selectedCard={selectedCard}
+              onCardClick={handleCardClick}
+            />
+          )}
 
-      {/* ─── Game log ─────────────────────────────────────────── */}
-      {logEntries.length > 0 && (
-        <GameLog entries={logEntries} maxVisible={10} />
-      )}
+          {/* ─── Game log ───────────────────────────────────── */}
+          {logEntries.length > 0 && (
+            <GameLog entries={logEntries} maxVisible={10} />
+          )}
+        </div>
+      </div>
 
       {/* ─── Flying card animation overlay ────────────────────── */}
       {flyingCard && (
