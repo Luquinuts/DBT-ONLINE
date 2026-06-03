@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { BattlefieldDef } from '@dbt-online/shared';
 import { GameImage } from './GameImage';
+import { HoloCard } from './HoloCard';
 import { getBattlefieldImageSrc } from '@/lib/assets';
 
 interface BattlefieldDisplayProps {
@@ -31,17 +32,19 @@ export function BattlefieldDisplay({
         onClick={() => setShowModal(true)}
         className="group relative aspect-[3/4] w-48 flex-shrink-0 overflow-hidden rounded-xl border-2 border-yellow-700/50 bg-gray-900 shadow-lg shadow-black/30 transition hover:border-yellow-500/70 hover:shadow-xl hover:shadow-yellow-900/20"
       >
-        {/* Background image */}
-        <GameImage
-          src={getBattlefieldImageSrc(battlefield.id)}
-          alt={battlefield.name}
-          className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-          fallback={
-            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-yellow-950/60 to-amber-900/40">
-              <span className="text-6xl">{battlefield.icon || '🗺️'}</span>
-            </div>
-          }
-        />
+        {/* Holo card art */}
+        <HoloCard className="absolute inset-0" disabled={isNullified}>
+          <GameImage
+            src={getBattlefieldImageSrc(battlefield.id)}
+            alt={battlefield.name}
+            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+            fallback={
+              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-yellow-950/60 to-amber-900/40">
+                <span className="text-6xl">{battlefield.icon || '🗺️'}</span>
+              </div>
+            }
+          />
+        </HoloCard>
 
         {/* Nullified overlay */}
         {isNullified && (
@@ -57,7 +60,7 @@ export function BattlefieldDisplay({
 
         {/* Gradient + text overlay at bottom */}
         <div
-          className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent p-3 pt-10 ${
+          className={`absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/95 via-black/60 to-transparent p-3 pt-10 ${
             isNullified ? 'opacity-50' : ''
           }`}
         >
@@ -71,7 +74,7 @@ export function BattlefieldDisplay({
         </div>
 
         {/* Click hint */}
-        <div className="absolute right-2 top-2 rounded-md bg-black/50 px-1.5 py-0.5 text-[10px] text-gray-400 opacity-0 transition group-hover:opacity-100">
+        <div className="absolute right-2 top-2 z-10 rounded-md bg-black/50 px-1.5 py-0.5 text-[10px] text-gray-400 opacity-0 transition group-hover:opacity-100">
           🔍
         </div>
       </button>

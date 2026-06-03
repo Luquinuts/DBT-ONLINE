@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import SidebarLayout from '@/components/SidebarLayout';
 import { GameImage } from '@/components/game/GameImage';
+import { HoloCard } from '@/components/game/HoloCard';
 import { getCharacterImageSrc, getBattlefieldImageSrc, getCardImageSrc } from '@/lib/assets';
 import type { CharacterDef, BattlefieldDef, CardDef } from '@dbt-online/shared';
 
@@ -98,13 +99,15 @@ export default function CatalogPage() {
                             onClick={() => setSelectedChar(char)}
                             className="group relative aspect-[3/4] overflow-hidden rounded-lg border border-gray-700 bg-gray-800/50 transition hover:border-[#e94560]/50 hover:shadow-lg hover:shadow-[#e94560]/10"
                           >
-                            <GameImage
-                              src={getCharacterImageSrc(char.id)}
-                              alt={char.name}
-                              className="h-full w-full object-cover transition group-hover:scale-105"
-                              fallback={<span className="text-4xl text-gray-600">?</span>}
-                            />
-                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                            <HoloCard className="absolute inset-0">
+                              <GameImage
+                                src={getCharacterImageSrc(char.id)}
+                                alt={char.name}
+                                className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                                fallback={<span className="text-4xl text-gray-600">?</span>}
+                              />
+                            </HoloCard>
+                            <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/80 to-transparent p-2">
                               <p className="text-sm font-bold text-white truncate">{char.name}</p>
                             </div>
                           </button>
@@ -125,15 +128,17 @@ export default function CatalogPage() {
                     onClick={() => setSelectedBf(bf)}
                     className="group relative aspect-[16/10] overflow-hidden rounded-lg border border-gray-700 bg-gray-800/50 transition hover:border-[#e94560]/50 hover:shadow-lg hover:shadow-[#e94560]/10"
                   >
-                    <GameImage
-                      src={getBattlefieldImageSrc(bf.id)}
-                      alt={bf.name}
-                      className="h-full w-full object-cover transition group-hover:scale-105"
-                      fallback={
-                        <span className="text-4xl text-gray-600">🗺️</span>
-                      }
-                    />
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                    <HoloCard className="absolute inset-0">
+                      <GameImage
+                        src={getBattlefieldImageSrc(bf.id)}
+                        alt={bf.name}
+                        className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                        fallback={
+                          <span className="text-4xl text-gray-600">🗺️</span>
+                        }
+                      />
+                    </HoloCard>
+                    <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/80 to-transparent p-2">
                       <p className="text-sm font-bold text-white truncate">
                         {bf.name}
                       </p>
@@ -152,15 +157,17 @@ export default function CatalogPage() {
                     onClick={() => setSelectedCard(card)}
                     className="group relative aspect-[3/4] overflow-hidden rounded-lg border border-gray-700 bg-gray-800/50 transition hover:border-[#e94560]/50 hover:shadow-lg hover:shadow-[#e94560]/10"
                   >
-                    <GameImage
-                      src={getCardImageSrc(card.id) ?? ''}
-                      alt={card.name}
-                      className="h-full w-full object-contain p-2 transition group-hover:scale-105"
-                      fallback={
-                        <span className="text-4xl text-gray-600">🃏</span>
-                      }
-                    />
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
+                    <HoloCard className="absolute inset-0">
+                      <GameImage
+                        src={getCardImageSrc(card.id) ?? ''}
+                        alt={card.name}
+                        className="h-full w-full object-contain p-2 transition duration-300 group-hover:scale-105"
+                        fallback={
+                          <span className="text-4xl text-gray-600">🃏</span>
+                        }
+                      />
+                    </HoloCard>
+                    <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/80 to-transparent p-2">
                       <p className="text-sm font-bold text-white truncate">
                         {card.name}
                       </p>
@@ -252,12 +259,14 @@ function CharacterDetail({ char }: { char: CharacterDef }) {
     <div className="flex gap-4">
       {/* Image — left */}
       <div className="w-52 flex-shrink-0 overflow-hidden rounded-lg">
-        <GameImage
-          src={getCharacterImageSrc(char.id)}
-          alt={char.name}
-          className="w-full object-cover"
-          fallback={<div className="h-72 w-full bg-gray-800" />}
-        />
+        <HoloCard className="w-full">
+          <GameImage
+            src={getCharacterImageSrc(char.id)}
+            alt={char.name}
+            className="w-full object-cover"
+            fallback={<div className="h-72 w-full bg-gray-800" />}
+          />
+        </HoloCard>
       </div>
 
       {/* Data — right */}
@@ -349,12 +358,14 @@ function BattlefieldDetail({ bf }: { bf: BattlefieldDef }) {
   return (
     <div className="flex gap-4">
       <div className="w-60 flex-shrink-0 overflow-hidden rounded-lg">
-        <GameImage
-          src={getBattlefieldImageSrc(bf.id)}
-          alt={bf.name}
-          className="w-full object-cover"
-          fallback={<div className="h-40 w-full bg-gray-800" />}
-        />
+        <HoloCard className="w-full">
+          <GameImage
+            src={getBattlefieldImageSrc(bf.id)}
+            alt={bf.name}
+            className="w-full object-cover"
+            fallback={<div className="h-40 w-full bg-gray-800" />}
+          />
+        </HoloCard>
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-2">
         <h2 className="text-xl font-bold text-white">{bf.name}</h2>
@@ -380,12 +391,14 @@ function CardDetail({ card }: { card: CardDef }) {
   return (
     <div className="flex gap-4">
       <div className={`w-48 flex-shrink-0 overflow-hidden rounded-lg border ${styleClass}`}>
-        <GameImage
-          src={getCardImageSrc(card.id) ?? ''}
-          alt={card.name}
-          className="w-full object-contain p-4"
-          fallback={<div className="h-64 w-full bg-gray-800" />}
-        />
+        <HoloCard className="w-full">
+          <GameImage
+            src={getCardImageSrc(card.id) ?? ''}
+            alt={card.name}
+            className="w-full object-contain p-4"
+            fallback={<div className="h-64 w-full bg-gray-800" />}
+          />
+        </HoloCard>
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-3">
         <div className="flex items-start justify-between">

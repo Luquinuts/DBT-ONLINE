@@ -4,6 +4,7 @@ import type { CharacterState } from '@dbt-online/shared';
 import { CHARACTER_DISPLAY } from '@/data/character-display';
 import { getCharacterImageSrc } from '@/lib/assets';
 import { GameImage } from './GameImage';
+import { HoloCard } from './HoloCard';
 import { HpBar } from './HpBar';
 
 interface CharacterCardProps {
@@ -68,16 +69,18 @@ export function CharacterCard({
         className="relative flex-shrink-0"
         style={{ backgroundColor: charDef.color + '20' }}
       >
-        <GameImage
-          src={getCharacterImageSrc(character.characterId)}
-          alt={charDef.displayName}
-          className="w-full object-contain"
-          fallback={
-            <div className="flex h-48 w-full items-center justify-center">
-              <span className="text-3xl">?</span>
-            </div>
-          }
-        />
+        <HoloCard className="w-full">
+          <GameImage
+            src={getCharacterImageSrc(character.characterId)}
+            alt={charDef.displayName}
+            className="w-full object-contain"
+            fallback={
+              <div className="flex h-48 w-full items-center justify-center">
+                <span className="text-3xl">?</span>
+              </div>
+            }
+          />
+        </HoloCard>
 
         {/* ─── Dead overlay ──────────────────────────────── */}
         {isDead && (
