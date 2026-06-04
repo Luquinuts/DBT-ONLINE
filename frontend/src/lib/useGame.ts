@@ -78,7 +78,7 @@ export function useGame(
     // ── Re-sync helpers ─────────────────────────────────────
     const requestSync = () => {
       if (socket.connected) {
-        socket.emit('game:request_sync', roomCode);
+        socket.emit('game:request_sync', { roomCode, playerId });
       }
     };
 

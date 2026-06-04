@@ -94,8 +94,17 @@ export function registerGameHandlers(
   });
 
   // ── game:request_sync ───────────────────────────────────────
-  socket.on('game:request_sync', (roomCode: string) => {
+  socket.on('game:request_sync', (data: string | { roomCode: string; playerId?: string }) => {
     try {
+      // Support both old (string) and new ({ roomCode, playerId }) formats
+      const roomCode = typeof data === 'string' ? data : data.roomCode;
+      const playerId = typeof data === 'string' ? undefined : data.playerId;
+
+      // Cancel any pending disconnect grace period for this player
+      if (playerId && cancelDisconnectGracePeriod(playerId)) {
+        console.log(`[game:request_sync] player ${playerId.slice(0, 8)} reconnected to ${roomCode}`);
+      }
+
       const engine = gameRegistry.getGame(roomCode);
       if (engine) {
         const state = engine.getState();
@@ -320,15 +329,39 @@ function handleDefenderResponse(
   );
 }
 
+// ─── Grace period for reconnection ──────────────────────────────
+
+/** Timers keyed by playerId — game stays alive while the timer is pending */
+const disconnectTimers = new Map<string, NodeJS.Timeout>();
+const DISCONNECT_GRACE_MS = 60_000; // 60 seconds to reconnect
+
+/**
+ * Cancel the disconnect grace period for a reconnecting player.
+ * Called from game:request_sync when the server detects a reconnection.
+ *
+ * @returns true if the player had a pending disconnect timer (was in grace period).
+ */
+export function cancelDisconnectGracePeriod(playerId: string): boolean {
+  const timer = disconnectTimers.get(playerId);
+  if (!timer) return false;
+
+  clearTimeout(timer);
+  disconnectTimers.delete(playerId);
+  console.log(`[game:reconnect] player ${playerId.slice(0, 8)} reconnected — grace cancelled`);
+  return true;
+}
+
 // ─── Disconnect helper (called FROM index.ts disconnect handler) ──
 
 /**
- * Handle game cleanup when a player disconnects during an active game.
+ * Handle a player disconnection during an active game.
  *
- * This is exported separately so index.ts can call it from its existing
- * disconnect handler without needing to import registerGameHandlers.
+ * Instead of immediately ending the game, starts a 60-second grace
+ * period. If the player reconnects (via game:request_sync) within that
+ * time, the game continues. If the timer expires, the game ends and
+ * the opposing player wins.
  *
- * @returns true if the player was in a game (and it was cleaned up), false otherwise.
+ * @returns true if the player was in a game (grace timer started).
  */
 export function handleGameDisconnect(
   io: Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>,
@@ -338,32 +371,50 @@ export function handleGameDisconnect(
   if (!game) return false;
 
   const { engine, roomCode, roomId } = game;
-
-  // Determine the remaining (winner) player
   const state = engine.getState();
+
   const opponentPlayerId =
     state.players[0].playerId === playerId
       ? state.players[1].playerId
       : state.players[0].playerId;
 
-  // Emit game:over to the remaining player
-  const finalState = engine.getState();
-  finalState.winner = opponentPlayerId;
-  finalState.phase = 'GAME_OVER';
-
-  io.to(roomId).emit('game:over', finalState);
-  io.to(roomId).emit('room:event', {
-    type: 'game_ended',
-    winnerId: opponentPlayerId,
-  });
-
-  // Clean up
-  gameRegistry.removeGame(roomCode);
+  // If there's already a pending timer for this player, don't start another
+  if (disconnectTimers.has(playerId)) {
+    console.log(`[game:disconnect] player ${playerId.slice(0, 8)} already in grace period`);
+    return true;
+  }
 
   console.log(
-    `[game:disconnect] player ${playerId} left — game ${roomCode} ended. ` +
-      `Winner: ${opponentPlayerId}`
+    `[game:disconnect] player ${playerId.slice(0, 8)} disconnected — ` +
+    `grace period ${DISCONNECT_GRACE_MS / 1000}s for ${roomCode}`
   );
 
+  const timer = setTimeout(() => {
+    disconnectTimers.delete(playerId);
+
+    // Game might have been removed already during the grace period
+    const gameAfterWait = gameRegistry.getGameByPlayer(playerId);
+    if (!gameAfterWait) return;
+
+    const { engine: e, roomCode: rc, roomId: rid } = gameAfterWait;
+    const finalState = e.getState();
+    finalState.winner = opponentPlayerId;
+    finalState.phase = 'GAME_OVER';
+
+    io.to(rid).emit('game:over', finalState);
+    io.to(rid).emit('room:event', {
+      type: 'game_ended',
+      winnerId: opponentPlayerId,
+    });
+
+    gameRegistry.removeGame(rc);
+
+    console.log(
+      `[game:disconnect] grace expired — ${rc} ended. ` +
+      `Winner: ${opponentPlayerId.slice(0, 8)}`
+    );
+  }, DISCONNECT_GRACE_MS);
+
+  disconnectTimers.set(playerId, timer);
   return true;
 }
