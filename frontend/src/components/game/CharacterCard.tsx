@@ -102,9 +102,7 @@ export function CharacterCard({
       <div className="px-3 pb-1">
         <div className="flex items-center justify-between mb-0.5">
           <span className="text-[11px] text-gray-400 font-medium">AVANCE</span>
-          {canAttack ? (
-            <span className="text-[11px] font-semibold text-green-400">✅ LISTO</span>
-          ) : (
+          {!canAttack && (
             <span className="text-[11px] text-yellow-400 font-semibold">
               {character.advanceCounter}/{character.currentLentitud}
             </span>
