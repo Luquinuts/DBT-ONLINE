@@ -6,6 +6,7 @@ import type { GameUIState } from '@/lib/gameReducer';
 import type { UseGameReturn } from '@/lib/useGame';
 import { FieldArea } from './FieldArea';
 import { HandArea } from './HandArea';
+import { CardInHand } from './CardInHand';
 import { ActionBar } from './ActionBar';
 import { CardPlayPanel } from './CardPlayPanel';
 import { BattlefieldDisplay } from './BattlefieldDisplay';
@@ -501,13 +502,18 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
 
       {/* ─── Hand overlay (WAITING_FOR_ACTION) ───────────── */}
       {currentPlayer && phase === 'WAITING_FOR_ACTION' && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-gray-900/95 backdrop-blur-md border-t border-gray-700/80 px-4 pb-2 pt-3 shadow-[0_-8px_20px_rgba(0,0,0,0.5)]">
-          <HandArea
-            hand={currentPlayer.hand}
-            isPlayable={true}
-            selectedCard={selectedCard}
-            onCardClick={handleCardClick}
-          />
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-gray-900/95 backdrop-blur-md border-t border-gray-700/80 px-4 pb-4 pt-4 shadow-[0_-8px_20px_rgba(0,0,0,0.5)]">
+          <div className="flex justify-center gap-3 overflow-x-auto pb-1">
+            {currentPlayer.hand.map((cardId) => (
+              <CardInHand
+                key={cardId}
+                cardId={cardId}
+                isPlayable={true}
+                isSelected={selectedCard === cardId}
+                onClick={() => handleCardClick(cardId)}
+              />
+            ))}
+          </div>
         </div>
       )}
 
