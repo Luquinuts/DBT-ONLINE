@@ -156,6 +156,16 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
         selectedCharacter !== null &&
         character.isAlive
       ) {
+        // Cell Games: only the character in the same position is targetable
+        if (battlefield?.effect === 'attack_front_only') {
+          const selectedIdx = currentPlayer?.characters.findIndex(
+            (c) => c.characterId === selectedCharacter,
+          ) ?? -1;
+          const targetIdx = opponent?.characters.findIndex(
+            (c) => c.characterId === characterId,
+          ) ?? -1;
+          return { isEligible: false, canTarget: selectedIdx === targetIdx };
+        }
         return { isEligible: false, canTarget: true };
       }
 
@@ -171,7 +181,7 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
 
       return { isEligible: false, canTarget: false };
     },
-    [phase, isMyTurn, currentPlayer, opponent, selectedCharacter, selectedCard, cardTargetSide],
+    [phase, isMyTurn, currentPlayer, opponent, selectedCharacter, selectedCard, cardTargetSide, battlefield],
   );
 
   const playerEligibilityMap = useMemo(() => {
@@ -256,6 +266,16 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
 
       // Opponent side: target in ATTACK phase with an attacker selected
       if (phase === 'ATTACK' && selectedCharacter) {
+        // Cell Games: only allow attacking the character at the same position
+        if (battlefield?.effect === 'attack_front_only') {
+          const selectedIdx = currentPlayer?.characters.findIndex(
+            (c) => c.characterId === selectedCharacter,
+          ) ?? -1;
+          const targetIdx = opponent?.characters.findIndex(
+            (c) => c.characterId === characterId,
+          ) ?? -1;
+          if (selectedIdx !== targetIdx) return;
+        }
         actions.attack(selectedCharacter, characterId, 'NORMAL');
         actions.selectCharacter(null);
         return;
@@ -269,7 +289,7 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
         return;
       }
     },
-    [isMyTurn, phase, currentPlayer, opponent, selectedCharacter, selectedCard, cardTargetSide, actions],
+    [isMyTurn, phase, currentPlayer, opponent, selectedCharacter, selectedCard, cardTargetSide, actions, battlefield],
   );
 
   const handleAbility = useCallback(
@@ -288,11 +308,21 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
       }
       // Second click on opponent: fire definitiva
       if (opponent?.characters.find((c) => c.characterId === characterId)) {
+        // Cell Games: only allow attacking the character at the same position
+        if (battlefield?.effect === 'attack_front_only') {
+          const selectedIdx = currentPlayer?.characters.findIndex(
+            (c) => c.characterId === selectedCharacter,
+          ) ?? -1;
+          const targetIdx = opponent?.characters.findIndex(
+            (c) => c.characterId === characterId,
+          ) ?? -1;
+          if (selectedIdx !== targetIdx) return;
+        }
         actions.attack(selectedCharacter, characterId, 'DEFINITIVA');
         actions.selectCharacter(null);
       }
     },
-    [selectedCharacter, opponent, actions],
+    [selectedCharacter, opponent, actions, currentPlayer, battlefield],
   );
 
   const handleCardClick = useCallback(
