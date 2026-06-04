@@ -416,10 +416,6 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
             <ActionBar
               phase={phase}
               isMyTurn={isMyTurn}
-              playerKi={currentPlayer.ki}
-              deckCount={currentPlayer.deck.length}
-              discardCount={currentPlayer.discardPile.length}
-              ultimateUses={currentPlayer.ultimateUsesRemaining}
               hasAdvancedThisTurn={currentPlayer.hasAdvancedThisTurn}
               hasPlayedEquipableThisTurn={currentPlayer.hasPlayedEquipableThisTurn}
               canRedrawThisTurn={currentPlayer.canRedrawThisTurn}

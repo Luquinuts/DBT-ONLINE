@@ -5,10 +5,6 @@ import type { GamePhase } from '@dbt-online/shared';
 interface ActionBarProps {
   phase: GamePhase;
   isMyTurn: boolean;
-  playerKi: number;
-  deckCount: number;
-  discardCount: number;
-  ultimateUses: number;
   hasAdvancedThisTurn: boolean;
   hasPlayedEquipableThisTurn: boolean;
   canRedrawThisTurn: boolean;
@@ -69,10 +65,6 @@ const PHASE_CONFIG: Record<
 export function ActionBar({
   phase,
   isMyTurn,
-  playerKi,
-  deckCount,
-  discardCount,
-  ultimateUses,
   hasAdvancedThisTurn,
   hasPlayedEquipableThisTurn,
   canRedrawThisTurn,
@@ -88,38 +80,14 @@ export function ActionBar({
   const showControls = isMyTurn && (isWaiting || isAdvance || isAttack);
 
   return (
-    <div className="rounded-lg border border-gray-700 bg-gray-900/60 backdrop-blur-sm px-4 py-3">
-      {/* ─── Phase indicator + counters ─────────────────────── */}
-      <div className="flex items-center justify-between mb-2">
-        {/* Phase badge */}
-        <div className="flex items-center gap-2">
-          <span
-            className={`rounded-md px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide text-white ${config.color}`}
-          >
-            {config.label}
-          </span>
-          {isMyTurn ? (
-            <span className="text-xs text-green-400 font-semibold">● Tu turno</span>
-          ) : (
-            <span className="text-xs text-gray-500">● Esperando rival</span>
-          )}
-        </div>
-
-        {/* Ki / Deck / Discard */}
-        <div className="flex items-center gap-3 text-xs text-gray-400">
-          <div className="flex items-center gap-1" title="Ki disponible">
-            <span className="text-yellow-400">⚡</span>
-            <span className="font-semibold text-yellow-300">{playerKi}</span>
-          </div>
-          {ultimateUses > 0 && (
-            <span className="text-pink-400" title="ULTIMATE disponible">
-              💥 ×{ultimateUses}
-            </span>
-          )}
-          <span className="text-gray-600">|</span>
-          <span title="Mazo">📚 {deckCount}</span>
-          <span title="Descarte">🗑️ {discardCount}</span>
-        </div>
+    <div className="rounded-lg bg-gray-900/60 backdrop-blur-sm px-4 py-3">
+      {/* ─── Phase badge ────────────────────────────────────── */}
+      <div className="flex items-center justify-center mb-2">
+        <span
+          className={`rounded-md px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide text-white ${config.color}`}
+        >
+          {config.label}
+        </span>
       </div>
 
       {/* ─── Action buttons ─────────────────────────────────── */}
