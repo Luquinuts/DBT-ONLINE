@@ -114,7 +114,7 @@ export default function CatalogPage() {
                 </div>
 
                 {/* Right: Character detail card */}
-                <div className="flex-1 min-w-0 md:sticky md:top-4 self-start">
+                <div className="flex-1 min-w-0 md:sticky md:top-4 self-start max-w-sm mx-auto md:mx-0">
                   <CharacterDetailCard char={selectedChar ?? data.characters[0]} />
                 </div>
               </div>
