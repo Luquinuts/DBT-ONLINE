@@ -380,6 +380,9 @@ export class GameEngine {
       };
     }
 
+    // Mark attacker as having attacked this turn (prevents double attack)
+    attacker.hasAttackedThisTurn = true;
+
     // Check if definitiva has sufficient ki — the attacker has the ability
     if (action.attackType === 'DEFINITIVA') {
       const charDef = this.state.getCharacterDef(action.attackerId);
