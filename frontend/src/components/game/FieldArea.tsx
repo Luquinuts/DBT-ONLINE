@@ -17,6 +17,7 @@ interface FieldAreaProps {
   targetMap: Record<string, boolean>;
   battlefieldEffect?: string;
   isDefending?: boolean;
+  compact?: boolean;
 }
 
 export function FieldArea({
@@ -31,6 +32,7 @@ export function FieldArea({
   targetMap,
   battlefieldEffect,
   isDefending,
+  compact,
 }: FieldAreaProps) {
   // ─── Ki display — show ki as filled/empty crystal icons ─────
   const renderKiDisplay = (ki: number) => {
@@ -72,7 +74,7 @@ export function FieldArea({
       </div>
 
       {/* ─── Character cards ────────────────────────────────── */}
-      <div className="flex justify-center gap-3">
+      <div className={`flex justify-center ${compact ? 'gap-1' : 'gap-3'}`}>
         {characters.map((char) => (
           <CharacterCard
             key={char.characterId}
@@ -84,6 +86,7 @@ export function FieldArea({
             onClick={() => onCharacterClick(char.characterId)}
             battlefieldEffect={battlefieldEffect}
             isDefending={isDefending}
+            compact={compact}
           />
         ))}
       </div>

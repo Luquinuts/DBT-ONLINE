@@ -447,6 +447,7 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
               onCharacterClick={(id) => handleCharacterClick(id, false)}
               eligibilityMap={opponentEligibilityMap}
               targetMap={opponentTargetMap}
+              compact={isCompact}
             />
           )}
 
@@ -476,6 +477,7 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
               onCharacterClick={(id) => handleCharacterClick(id, true)}
               eligibilityMap={playerEligibilityMap}
               targetMap={playerTargetMap}
+              compact={isCompact}
             />
           )}
 

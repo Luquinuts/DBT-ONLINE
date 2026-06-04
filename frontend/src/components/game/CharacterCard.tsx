@@ -16,6 +16,7 @@ interface CharacterCardProps {
   onClick?: () => void;
   battlefieldEffect?: string;
   isDefending?: boolean;
+  compact?: boolean;
 }
 
 export function CharacterCard({
@@ -27,6 +28,7 @@ export function CharacterCard({
   onClick,
   battlefieldEffect,
   isDefending,
+  compact,
 }: CharacterCardProps) {
   const charDef = CHARACTER_DISPLAY[character.characterId];
   const isDead = !character.isAlive;
@@ -56,7 +58,7 @@ export function CharacterCard({
     <div
       onClick={isDead ? undefined : onClick}
       className={`
-        relative flex w-48 flex-col overflow-hidden rounded-xl
+        relative flex ${compact ? 'w-36' : 'w-48'} flex-col overflow-hidden rounded-xl
         bg-gray-900
         transition-all duration-200 select-none
         ${feedbackClass}
@@ -75,8 +77,8 @@ export function CharacterCard({
             alt={charDef.displayName}
             className="w-full object-contain"
             fallback={
-              <div className="flex h-48 w-full items-center justify-center">
-                <span className="text-3xl">?</span>
+              <div className={`flex w-full items-center justify-center ${compact ? 'h-36' : 'h-48'}`}>
+                <span className={compact ? 'text-2xl' : 'text-3xl'}>?</span>
               </div>
             }
           />
@@ -86,7 +88,7 @@ export function CharacterCard({
         {isDead && (
           <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60">
             <div className="text-center">
-              <span className="text-4xl">💀</span>
+              <span className={compact ? 'text-3xl' : 'text-4xl'}>💀</span>
               <p className="text-[10px] text-gray-400 mt-1">DERRIBADO</p>
             </div>
           </div>
@@ -94,21 +96,21 @@ export function CharacterCard({
       </div>
 
       {/* ─── HP Bar (below image) ──────────────────────────── */}
-      <div className="px-3 pt-2 pb-1">
+      <div className={`${compact ? 'px-2 pt-1 pb-0.5' : 'px-3 pt-2 pb-1'}`}>
         <HpBar current={character.currentVida} max={character.maxVida} animated />
       </div>
 
       {/* ─── Advance counter (below HP bar) ────────────────── */}
-      <div className="px-3 pb-1">
-        <div className="flex items-center justify-between mb-0.5">
-          <span className="text-[11px] text-gray-400 font-medium">AVANCE</span>
+      <div className={`${compact ? 'px-2 pb-0.5' : 'px-3 pb-1'}`}>
+        <div className={`flex items-center justify-between ${compact ? 'mb-0' : 'mb-0.5'}`}>
+          <span className={`${compact ? 'text-[10px]' : 'text-[11px]'} text-gray-400 font-medium`}>AVANCE</span>
           {!canAttack && (
-            <span className="text-[11px] text-yellow-400 font-semibold">
+            <span className={`${compact ? 'text-[10px]' : 'text-[11px]'} text-yellow-400 font-semibold`}>
               {character.advanceCounter}/{character.currentLentitud}
             </span>
           )}
         </div>
-        <div className="w-full h-1.5 rounded-full bg-gray-700/60 overflow-hidden">
+        <div className={`w-full rounded-full bg-gray-700/60 overflow-hidden ${compact ? 'h-1' : 'h-1.5'}`}>
           <div
             className={`h-full rounded-full transition-all duration-300 ${
               canAttack ? 'bg-green-500' : 'bg-yellow-500'
@@ -121,7 +123,7 @@ export function CharacterCard({
       </div>
 
       {/* ─── Shield / Rage icons ──────────────────────────── */}
-      <div className="flex items-center gap-1.5 px-3 pt-0.5 pb-0.5">
+      <div className={`flex items-center ${compact ? 'gap-1 px-2 pt-0 pb-0' : 'gap-1.5 px-3 pt-0.5 pb-0.5'}`}>
         {character.shieldEquipped && (
           <span className="text-xs" title="Escudo equipado">🛡️</span>
         )}
@@ -134,12 +136,12 @@ export function CharacterCard({
 
       {/* ─── Status text ───────────────────────────────────── */}
       {!isDead && canAttack && !character.hasAttackedThisTurn && (
-        <div className="px-3 pb-1.5 text-[10px] text-green-400/80 italic">
+        <div className={`${compact ? 'px-2 pb-1' : 'px-3 pb-1.5'} text-[10px] text-green-400/80 italic`}>
           ✦ Puede atacar
         </div>
       )}
       {!isDead && isDefending && (
-        <div className="px-3 pb-1.5 text-[10px] text-yellow-400/80 italic">
+        <div className={`${compact ? 'px-2 pb-1' : 'px-3 pb-1.5'} text-[10px] text-yellow-400/80 italic`}>
           🛡 Defendiendo
         </div>
       )}
