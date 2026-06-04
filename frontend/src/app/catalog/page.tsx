@@ -239,26 +239,22 @@ function CharacterArtCard({ char, onClick }: { char: CharacterDef; onClick: () =
   return (
     <button
       onClick={onClick}
-      className="w-full max-w-md rounded-xl border border-gray-700/80 bg-gray-900/80 overflow-hidden transition hover:border-gray-600 hover:shadow-lg hover:shadow-[#e94560]/5"
+      className="w-full max-w-sm rounded-xl border border-gray-700/80 bg-gray-800 overflow-hidden transition hover:border-gray-600 hover:shadow-lg hover:shadow-[#e94560]/5"
     >
-      <div className="relative aspect-[3/4] w-full bg-gray-800">
-        <HoloCard className="absolute inset-0">
+      <div className="relative w-full bg-gray-800">
+        <HoloCard className="relative">
           <GameImage
             src={getCharacterImageSrc(char.id)}
             alt={char.name}
-            className="h-full w-full object-cover"
-            fallback={<div className="h-full w-full bg-gray-800 flex items-center justify-center"><span className="text-4xl text-gray-600">?</span></div>}
+            className="h-auto w-full object-contain"
+            fallback={<div className="h-80 w-full bg-gray-800 flex items-center justify-center"><span className="text-4xl text-gray-600">?</span></div>}
           />
         </HoloCard>
         {/* Type badge */}
-        <div className="absolute top-3 left-3 z-10">
-          <span className={`rounded border px-2 py-0.5 text-xs font-bold uppercase tracking-wide ${typeColor[char.type] || 'border-gray-500 text-gray-400'}`}>
+        <div className="absolute top-2 left-2 z-10">
+          <span className={`rounded border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${typeColor[char.type] || 'border-gray-500 text-gray-400'}`}>
             {typeLabel[char.type] || char.type}
           </span>
-        </div>
-        {/* Name */}
-        <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/80 to-transparent p-3 pt-8">
-          <p className="text-lg font-bold text-white">{char.name}</p>
         </div>
       </div>
     </button>
