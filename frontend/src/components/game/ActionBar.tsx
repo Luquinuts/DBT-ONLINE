@@ -117,15 +117,6 @@ export function ActionBar({
             </button>
           )}
 
-          {/* End Turn button (always available to the active player) */}
-          <button
-            type="button"
-            onClick={onEndTurn}
-            className="rounded-lg border border-gray-600 px-4 py-2 text-xs font-medium text-gray-300
-                       transition hover:bg-gray-800 hover:text-white active:scale-95"
-          >
-            Finalizar Turno
-          </button>
         </div>
       )}
 
