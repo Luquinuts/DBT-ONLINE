@@ -506,7 +506,7 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
                   }}
                 />
               )}
-              <div className={`flex justify-center overflow-x-auto ${
+              <div className={`flex justify-center ${
                 selectedCard ? 'gap-1 py-1' : 'gap-0.5'
               }`}>
                 {currentPlayer.hand.map((cardId) => (
