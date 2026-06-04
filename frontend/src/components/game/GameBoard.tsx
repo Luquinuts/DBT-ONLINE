@@ -486,11 +486,11 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
             />
           )}
 
-          {/* ─── Hand area ──────────────────────────────────── */}
-          {currentPlayer && (
+          {/* ─── Hand area (minimized) ─────────────────────── */}
+          {currentPlayer && phase !== 'WAITING_FOR_ACTION' && (
             <HandArea
               hand={currentPlayer.hand}
-              isPlayable={isHandPlayable}
+              isPlayable={false}
               selectedCard={selectedCard}
               onCardClick={handleCardClick}
             />
@@ -498,6 +498,18 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
 
         </div>
       </div>
+
+      {/* ─── Hand overlay (WAITING_FOR_ACTION) ───────────── */}
+      {currentPlayer && phase === 'WAITING_FOR_ACTION' && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-gray-900/95 backdrop-blur-md border-t border-gray-700/80 px-4 pb-2 pt-3 shadow-[0_-8px_20px_rgba(0,0,0,0.5)]">
+          <HandArea
+            hand={currentPlayer.hand}
+            isPlayable={true}
+            selectedCard={selectedCard}
+            onCardClick={handleCardClick}
+          />
+        </div>
+      )}
 
       {/* ─── Flying card animation overlay ────────────────────── */}
       {flyingCard && (
