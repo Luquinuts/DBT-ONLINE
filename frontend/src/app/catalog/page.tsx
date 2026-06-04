@@ -25,8 +25,9 @@ export default function CatalogPage() {
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('characters');
 
-  // Modal state
+  // Modal / detail state
   const [selectedChar, setSelectedChar] = useState<CharacterDef | null>(null);
+  const [charDetailOpen, setCharDetailOpen] = useState(false);
   const [selectedBf, setSelectedBf] = useState<BattlefieldDef | null>(null);
   const [selectedCard, setSelectedCard] = useState<CardDef | null>(null);
 
@@ -85,8 +86,8 @@ export default function CatalogPage() {
             {/* ─── Characters — Master/Detail ─── */}
             {tab === 'characters' && (
               <div className="flex flex-col gap-4 md:flex-row md:gap-6">
-                {/* Left: Character icon selector (same as game draft) */}
-                <div className="w-full md:w-64 md:shrink-0 space-y-6">
+                {/* Left: Character icon selector — takes remaining space */}
+                <div className="w-full md:flex-1 space-y-6">
                   {typeOrder.map((t) => {
                     const chars = data.characters.filter((c) => c.type === t);
                     if (chars.length === 0) return null;
@@ -95,14 +96,14 @@ export default function CatalogPage() {
                         <h3 className={`mb-2 border-b pb-1 text-xs font-semibold uppercase tracking-wider ${typeSectionColor[t]}`}>
                           {typeLabel[t]} ({chars.length})
                         </h3>
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className="grid grid-cols-5 gap-2">
                           {chars.map((char) => {
                             const selected = (selectedChar ?? data.characters[0]).id === char.id;
                             return (
                               <CharacterPickCard
                                 key={char.id}
                                 characterId={char.id}
-                                onClick={() => setSelectedChar(char)}
+                                onClick={() => { setSelectedChar(char); setCharDetailOpen(false); }}
                                 selected={selected}
                               />
                             );
@@ -113,9 +114,13 @@ export default function CatalogPage() {
                   })}
                 </div>
 
-                {/* Right: Character detail card */}
-                <div className="flex-1 min-w-0 md:sticky md:top-4 self-start max-w-sm mx-auto md:mx-0">
-                  <CharacterDetailCard char={selectedChar ?? data.characters[0]} />
+                {/* Right: Character detail card — fixed width, left-aligned */}
+                <div className="w-[260px] shrink-0">
+                  <CharacterDetailCard
+                    char={selectedChar ?? data.characters[0]}
+                    expanded={charDetailOpen}
+                    onToggle={() => setCharDetailOpen((v) => !v)}
+                  />
                 </div>
               </div>
             )}
@@ -235,9 +240,12 @@ function DetailModal({ children, onClose }: { children: React.ReactNode; onClose
 
 // ─── Character Detail Card (inline, no modal) ────────────────
 
-function CharacterDetailCard({ char }: { char: CharacterDef }) {
+function CharacterDetailCard({ char, expanded, onToggle }: { char: CharacterDef; expanded: boolean; onToggle: () => void }) {
   return (
-    <div className="rounded-xl border border-gray-700/80 bg-gray-900/80 overflow-hidden">
+    <button
+      onClick={onToggle}
+      className="w-full text-left rounded-xl border border-gray-700/80 bg-gray-900/80 overflow-hidden transition hover:border-gray-600"
+    >
       {/* Image */}
       <div className="relative aspect-[3/4] w-full bg-gray-800">
         <HoloCard className="absolute inset-0">
@@ -249,72 +257,85 @@ function CharacterDetailCard({ char }: { char: CharacterDef }) {
           />
         </HoloCard>
         {/* Type badge overlay */}
-        <div className="absolute top-3 left-3 z-10">
-          <span className={`rounded border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${typeColor[char.type] || 'border-gray-500 text-gray-400'}`}>
+        <div className="absolute top-2 left-2 z-10">
+          <span className={`rounded border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${typeColor[char.type] || 'border-gray-500 text-gray-400'}`}>
             {typeLabel[char.type] || char.type}
           </span>
         </div>
-      </div>
-
-      {/* Info below image */}
-      <div className="p-3 space-y-3">
-        <h2 className="text-lg font-bold text-white">{char.name}</h2>
-
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-1.5 text-center">
-          <div className="rounded bg-gray-800/60 p-1.5">
-            <p className="text-[10px] text-gray-500">Vida</p>
-            <p className="text-base font-bold text-white">{char.stats.vida}</p>
-          </div>
-          <div className="rounded bg-gray-800/60 p-1.5">
-            <p className="text-[10px] text-gray-500">Lentitud</p>
-            <p className="text-base font-bold text-white">{char.stats.lentitud}</p>
-          </div>
-          <div className="rounded bg-gray-800/60 p-1.5">
-            <p className="text-[10px] text-gray-500">Ataque</p>
-            <p className="text-base font-bold text-white">{char.stats.ataque}</p>
-          </div>
-        </div>
-
-        {/* Abilities */}
-        <div className="space-y-1.5">
-          {char.abilities.pasiva && (
-            <AbilityMini label="Pasiva" name={char.abilities.pasiva.name} desc={char.abilities.pasiva.description} />
-          )}
-          {char.abilities.habilidad && (
-            <AbilityMini
-              label="Habilidad"
-              name={char.abilities.habilidad.name}
-              desc={char.abilities.habilidad.description}
-              extra={
-                char.abilities.habilidad.cooldown > 0
-                  ? `CD: ${char.abilities.habilidad.cooldown}`
-                  : char.abilities.habilidad.usesPerGame
-                    ? `${char.abilities.habilidad.usesPerGame} uso/s`
-                    : undefined
-              }
-            />
-          )}
-          {char.abilities.definitiva && (
-            <AbilityMini
-              label="Definitiva"
-              name={char.abilities.definitiva.name}
-              desc={char.abilities.definitiva.description}
-              extra={`${char.abilities.definitiva.kiCost} ki`}
-            />
-          )}
-        </div>
-
-        {/* Icons */}
-        {Object.keys(char.icons).length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {char.icons.rage && <span className="rounded bg-yellow-500/10 px-2 py-0.5 text-[10px] text-yellow-400">Rage</span>}
-            {char.icons.change && <span className="rounded bg-blue-500/10 px-2 py-0.5 text-[10px] text-blue-400">Cambio de forma</span>}
-            {char.icons.deathIcon && <span className="rounded bg-red-500/10 px-2 py-0.5 text-[10px] text-red-400">Death icon</span>}
+        {/* Expand hint */}
+        {!expanded && (
+          <div className="absolute bottom-2 left-2 right-2 z-10">
+            <span className="block rounded bg-black/60 px-2 py-1 text-center text-[10px] text-gray-400 backdrop-blur-sm">
+              Click para detalle
+            </span>
           </div>
         )}
       </div>
-    </div>
+
+      {/* Name always visible */}
+      <div className="p-2">
+        <h2 className="text-sm font-bold text-white truncate">{char.name}</h2>
+      </div>
+
+      {/* Info below image — only when expanded */}
+      {expanded && (
+        <div className="px-2 pb-2 space-y-2">
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-1 text-center">
+            <div className="rounded bg-gray-800/60 p-1">
+              <p className="text-[10px] text-gray-500">Vida</p>
+              <p className="text-sm font-bold text-white">{char.stats.vida}</p>
+            </div>
+            <div className="rounded bg-gray-800/60 p-1">
+              <p className="text-[10px] text-gray-500">Lentitud</p>
+              <p className="text-sm font-bold text-white">{char.stats.lentitud}</p>
+            </div>
+            <div className="rounded bg-gray-800/60 p-1">
+              <p className="text-[10px] text-gray-500">Ataque</p>
+              <p className="text-sm font-bold text-white">{char.stats.ataque}</p>
+            </div>
+          </div>
+
+          {/* Abilities */}
+          <div className="space-y-1">
+            {char.abilities.pasiva && (
+              <AbilityMini label="Pasiva" name={char.abilities.pasiva.name} desc={char.abilities.pasiva.description} />
+            )}
+            {char.abilities.habilidad && (
+              <AbilityMini
+                label="Habilidad"
+                name={char.abilities.habilidad.name}
+                desc={char.abilities.habilidad.description}
+                extra={
+                  char.abilities.habilidad.cooldown > 0
+                    ? `CD: ${char.abilities.habilidad.cooldown}`
+                    : char.abilities.habilidad.usesPerGame
+                      ? `${char.abilities.habilidad.usesPerGame} uso/s`
+                      : undefined
+                }
+              />
+            )}
+            {char.abilities.definitiva && (
+              <AbilityMini
+                label="Definitiva"
+                name={char.abilities.definitiva.name}
+                desc={char.abilities.definitiva.description}
+                extra={`${char.abilities.definitiva.kiCost} ki`}
+              />
+            )}
+          </div>
+
+          {/* Icons */}
+          {Object.keys(char.icons).length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {char.icons.rage && <span className="rounded bg-yellow-500/10 px-2 py-0.5 text-[10px] text-yellow-400">Rage</span>}
+              {char.icons.change && <span className="rounded bg-blue-500/10 px-2 py-0.5 text-[10px] text-blue-400">Cambio de forma</span>}
+              {char.icons.deathIcon && <span className="rounded bg-red-500/10 px-2 py-0.5 text-[10px] text-red-400">Death icon</span>}
+            </div>
+          )}
+        </div>
+      )}
+    </button>
   );
 }
 
