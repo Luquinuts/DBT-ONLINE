@@ -83,43 +83,31 @@ export default function CatalogPage() {
               ))}
             </div>
 
-            {/* ─── Characters — Master/Detail ─── */}
+            {/* ─── Characters — Fighting Game Selector ─── */}
             {tab === 'characters' && (
-              <div className="flex flex-col gap-4 md:flex-row md:gap-6">
-                {/* Left: Character icon selector — takes remaining space */}
-                <div className="w-full md:flex-1 space-y-6">
-                  {typeOrder.map((t) => {
-                    const chars = data.characters.filter((c) => c.type === t);
-                    if (chars.length === 0) return null;
-                    return (
-                      <div key={t}>
-                        <h3 className={`mb-2 border-b pb-1 text-xs font-semibold uppercase tracking-wider ${typeSectionColor[t]}`}>
-                          {typeLabel[t]} ({chars.length})
-                        </h3>
-                        <div className="grid grid-cols-5 gap-2">
-                          {chars.map((char) => {
-                            const selected = (selectedChar ?? data.characters[0]).id === char.id;
-                            return (
-                              <CharacterPickCard
-                                key={char.id}
-                                characterId={char.id}
-                                onClick={() => { setSelectedChar(char); setCharDetailOpen(false); }}
-                                selected={selected}
-                              />
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
+              <div className="flex flex-col gap-4 md:flex-row md:gap-0 md:min-h-[calc(100vh-180px)]">
+                {/* Left half: Icon grid — no names, flat, fighting-game style */}
+                <div className="w-full md:w-1/2 md:pr-4">
+                  <div className="grid grid-cols-4 gap-2 sm:gap-3">
+                    {data.characters.map((char) => {
+                      const selected = (selectedChar ?? data.characters[0]).id === char.id;
+                      return (
+                        <CharacterPickCard
+                          key={char.id}
+                          characterId={char.id}
+                          onClick={() => setSelectedChar(char)}
+                          selected={selected}
+                        />
+                      );
+                    })}
+                  </div>
                 </div>
 
-                {/* Right: Character detail card — fixed width, left-aligned */}
-                <div className="w-[260px] shrink-0">
-                  <CharacterDetailCard
+                {/* Right half: Big character art */}
+                <div className="w-full md:w-1/2 flex items-start justify-center md:pl-4">
+                  <CharacterArtCard
                     char={selectedChar ?? data.characters[0]}
-                    expanded={charDetailOpen}
-                    onToggle={() => setCharDetailOpen((v) => !v)}
+                    onClick={() => setCharDetailOpen(true)}
                   />
                 </div>
               </div>
@@ -208,6 +196,13 @@ export default function CatalogPage() {
           <CardDetail card={selectedCard} />
         </DetailModal>
       )}
+
+      {/* Character Detail Popup */}
+      {charDetailOpen && selectedChar && (
+        <DetailModal onClose={() => setCharDetailOpen(false)}>
+          <CharacterDetailPopup char={selectedChar} />
+        </DetailModal>
+      )}
     </SidebarLayout>
   );
 }
@@ -238,15 +233,14 @@ function DetailModal({ children, onClose }: { children: React.ReactNode; onClose
   );
 }
 
-// ─── Character Detail Card (inline, no modal) ────────────────
+// ─── Character Art Card (fighting game style, only art) ──────
 
-function CharacterDetailCard({ char, expanded, onToggle }: { char: CharacterDef; expanded: boolean; onToggle: () => void }) {
+function CharacterArtCard({ char, onClick }: { char: CharacterDef; onClick: () => void }) {
   return (
     <button
-      onClick={onToggle}
-      className="w-full text-left rounded-xl border border-gray-700/80 bg-gray-900/80 overflow-hidden transition hover:border-gray-600"
+      onClick={onClick}
+      className="w-full max-w-md rounded-xl border border-gray-700/80 bg-gray-900/80 overflow-hidden transition hover:border-gray-600 hover:shadow-lg hover:shadow-[#e94560]/5"
     >
-      {/* Image */}
       <div className="relative aspect-[3/4] w-full bg-gray-800">
         <HoloCard className="absolute inset-0">
           <GameImage
@@ -256,86 +250,118 @@ function CharacterDetailCard({ char, expanded, onToggle }: { char: CharacterDef;
             fallback={<div className="h-full w-full bg-gray-800 flex items-center justify-center"><span className="text-4xl text-gray-600">?</span></div>}
           />
         </HoloCard>
-        {/* Type badge overlay */}
-        <div className="absolute top-2 left-2 z-10">
-          <span className={`rounded border px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${typeColor[char.type] || 'border-gray-500 text-gray-400'}`}>
+        {/* Type badge */}
+        <div className="absolute top-3 left-3 z-10">
+          <span className={`rounded border px-2 py-0.5 text-xs font-bold uppercase tracking-wide ${typeColor[char.type] || 'border-gray-500 text-gray-400'}`}>
             {typeLabel[char.type] || char.type}
           </span>
         </div>
-        {/* Expand hint */}
-        {!expanded && (
-          <div className="absolute bottom-2 left-2 right-2 z-10">
-            <span className="block rounded bg-black/60 px-2 py-1 text-center text-[10px] text-gray-400 backdrop-blur-sm">
-              Click para detalle
+        {/* Name */}
+        <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/80 to-transparent p-3 pt-8">
+          <p className="text-lg font-bold text-white">{char.name}</p>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+// ─── Character Detail Popup (modal content) ──────────────────
+
+function CharacterDetailPopup({ char }: { char: CharacterDef }) {
+  return (
+    <div className="flex flex-col gap-4 sm:flex-row">
+      {/* Image */}
+      <div className="w-full sm:w-52 shrink-0 overflow-hidden rounded-lg">
+        <HoloCard className="w-full">
+          <GameImage
+            src={getCharacterImageSrc(char.id)}
+            alt={char.name}
+            className="w-full object-cover"
+            fallback={<div className="h-60 w-full bg-gray-800" />}
+          />
+        </HoloCard>
+      </div>
+
+      {/* Data */}
+      <div className="flex min-w-0 flex-1 flex-col gap-3">
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-white">{char.name}</h2>
+            <span className={`inline-block mt-1 rounded border px-2 py-0.5 text-xs font-medium ${typeColor[char.type] || 'border-gray-500 text-gray-400'}`}>
+              {typeLabel[char.type] || char.type}
             </span>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-2 text-center text-sm">
+          <div className="rounded bg-gray-700/50 p-2">
+            <p className="text-xs text-gray-400">Vida</p>
+            <p className="text-lg font-bold text-white">{char.stats.vida}</p>
+          </div>
+          <div className="rounded bg-gray-700/50 p-2">
+            <p className="text-xs text-gray-400">Lentitud</p>
+            <p className="text-lg font-bold text-white">{char.stats.lentitud}</p>
+          </div>
+          <div className="rounded bg-gray-700/50 p-2">
+            <p className="text-xs text-gray-400">Ataque</p>
+            <p className="text-lg font-bold text-white">{char.stats.ataque}</p>
+          </div>
+        </div>
+
+        {/* Abilities */}
+        <div className="space-y-2">
+          {char.abilities.pasiva && (
+            <AbilityDetail label="Pasiva" name={char.abilities.pasiva.name} desc={char.abilities.pasiva.description} />
+          )}
+          {char.abilities.habilidad && (
+            <AbilityDetail
+              label="Habilidad"
+              name={char.abilities.habilidad.name}
+              desc={char.abilities.habilidad.description}
+              extra={
+                char.abilities.habilidad.cooldown > 0
+                  ? `CD: ${char.abilities.habilidad.cooldown}`
+                  : char.abilities.habilidad.usesPerGame
+                    ? `${char.abilities.habilidad.usesPerGame} uso/s`
+                    : undefined
+              }
+            />
+          )}
+          {char.abilities.definitiva && (
+            <AbilityDetail
+              label="Definitiva"
+              name={char.abilities.definitiva.name}
+              desc={char.abilities.definitiva.description}
+              extra={`${char.abilities.definitiva.kiCost} ki`}
+            />
+          )}
+        </div>
+
+        {/* Icons */}
+        {Object.keys(char.icons).length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {char.icons.rage && <span className="rounded bg-yellow-500/10 px-2 py-0.5 text-xs text-yellow-400">Rage</span>}
+            {char.icons.change && <span className="rounded bg-blue-500/10 px-2 py-0.5 text-xs text-blue-400">Cambio de forma</span>}
+            {char.icons.deathIcon && <span className="rounded bg-red-500/10 px-2 py-0.5 text-xs text-red-400">Death icon</span>}
           </div>
         )}
       </div>
+    </div>
+  );
+}
 
-      {/* Name always visible */}
-      <div className="p-2">
-        <h2 className="text-sm font-bold text-white truncate">{char.name}</h2>
+function AbilityDetail({ label, name, desc, extra }: { label: string; name: string; desc: string; extra?: string }) {
+  return (
+    <div className="rounded bg-gray-700/30 p-3 text-sm">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-xs font-semibold uppercase tracking-wide text-[#e94560]">{label}</span>
+        {extra && <span className="text-xs text-gray-500">{extra}</span>}
       </div>
-
-      {/* Info below image — only when expanded */}
-      {expanded && (
-        <div className="px-2 pb-2 space-y-2">
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-1 text-center">
-            <div className="rounded bg-gray-800/60 p-1">
-              <p className="text-[10px] text-gray-500">Vida</p>
-              <p className="text-sm font-bold text-white">{char.stats.vida}</p>
-            </div>
-            <div className="rounded bg-gray-800/60 p-1">
-              <p className="text-[10px] text-gray-500">Lentitud</p>
-              <p className="text-sm font-bold text-white">{char.stats.lentitud}</p>
-            </div>
-            <div className="rounded bg-gray-800/60 p-1">
-              <p className="text-[10px] text-gray-500">Ataque</p>
-              <p className="text-sm font-bold text-white">{char.stats.ataque}</p>
-            </div>
-          </div>
-
-          {/* Abilities */}
-          <div className="space-y-1">
-            {char.abilities.pasiva && (
-              <AbilityMini label="Pasiva" name={char.abilities.pasiva.name} desc={char.abilities.pasiva.description} />
-            )}
-            {char.abilities.habilidad && (
-              <AbilityMini
-                label="Habilidad"
-                name={char.abilities.habilidad.name}
-                desc={char.abilities.habilidad.description}
-                extra={
-                  char.abilities.habilidad.cooldown > 0
-                    ? `CD: ${char.abilities.habilidad.cooldown}`
-                    : char.abilities.habilidad.usesPerGame
-                      ? `${char.abilities.habilidad.usesPerGame} uso/s`
-                      : undefined
-                }
-              />
-            )}
-            {char.abilities.definitiva && (
-              <AbilityMini
-                label="Definitiva"
-                name={char.abilities.definitiva.name}
-                desc={char.abilities.definitiva.description}
-                extra={`${char.abilities.definitiva.kiCost} ki`}
-              />
-            )}
-          </div>
-
-          {/* Icons */}
-          {Object.keys(char.icons).length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {char.icons.rage && <span className="rounded bg-yellow-500/10 px-2 py-0.5 text-[10px] text-yellow-400">Rage</span>}
-              {char.icons.change && <span className="rounded bg-blue-500/10 px-2 py-0.5 text-[10px] text-blue-400">Cambio de forma</span>}
-              {char.icons.deathIcon && <span className="rounded bg-red-500/10 px-2 py-0.5 text-[10px] text-red-400">Death icon</span>}
-            </div>
-          )}
-        </div>
-      )}
-    </button>
+      <p className="font-medium text-white">{name}</p>
+      <p className="mt-1 text-xs leading-relaxed text-gray-400">{desc}</p>
+    </div>
   );
 }
 
