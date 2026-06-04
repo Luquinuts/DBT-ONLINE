@@ -86,6 +86,7 @@ export default function CatalogPage() {
             {/* ─── Characters — Fighting Game Selector ─── */}
             {tab === 'characters' && (
               <div className="flex flex-col gap-4 md:flex-row md:gap-0 md:min-h-[calc(100vh-180px)]">
+                <style>{`@keyframes slide-in-left{0%{opacity:0;transform:translateX(-24px)}100%{opacity:1;transform:translateX(0)}}`}</style>
                 {/* Left half: Icon grid — no names, flat, fighting-game style */}
                 <div className="w-full md:w-1/2 md:pr-4">
                   <div className="grid grid-cols-4 gap-2 sm:gap-3">
@@ -103,12 +104,17 @@ export default function CatalogPage() {
                   </div>
                 </div>
 
-                {/* Right half: Big character art */}
+                {/* Right half: Big character art — slides in from left on change */}
                 <div className="w-full md:w-1/2 flex items-start justify-center md:pl-4">
-                  <CharacterArtCard
-                    char={selectedChar ?? data.characters[0]}
-                    onClick={() => setCharDetailOpen(true)}
-                  />
+                  <div
+                    key={selectedChar?.id ?? 'none'}
+                    className="animate-[slide-in-left_0.25s_ease-out] w-full flex justify-center"
+                  >
+                    <CharacterArtCard
+                      char={selectedChar ?? data.characters[0]}
+                      onClick={() => setCharDetailOpen(true)}
+                    />
+                  </div>
                 </div>
               </div>
             )}
