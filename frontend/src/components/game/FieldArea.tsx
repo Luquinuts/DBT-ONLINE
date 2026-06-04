@@ -18,6 +18,7 @@ interface FieldAreaProps {
   battlefieldEffect?: string;
   isDefending?: boolean;
   compact?: boolean;
+  dimmed?: boolean;
 }
 
 export function FieldArea({
@@ -33,6 +34,7 @@ export function FieldArea({
   battlefieldEffect,
   isDefending,
   compact,
+  dimmed,
 }: FieldAreaProps) {
   // ─── Ki display — show ki as filled/empty crystal icons ─────
   const renderKiDisplay = (ki: number) => {
@@ -58,7 +60,7 @@ export function FieldArea({
   const playerLabel = isPlayer ? 'Tu Campo' : 'Rival';
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className={`flex flex-col gap-2 ${dimmed ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
       {/* ─── Player info bar ────────────────────────────────── */}
       <div className="flex items-center justify-between px-1">
         <h3 className="text-sm font-semibold text-gray-300">{playerLabel}</h3>

@@ -81,15 +81,6 @@ export function ActionBar({
 
   return (
     <div className="rounded-lg bg-gray-900/60 backdrop-blur-sm px-4 py-3">
-      {/* ─── Phase badge ────────────────────────────────────── */}
-      <div className="flex items-center justify-center mb-2">
-        <span
-          className={`rounded-md px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide text-white ${config.color}`}
-        >
-          {config.label}
-        </span>
-      </div>
-
       {/* ─── Action buttons ─────────────────────────────────── */}
       {showControls && (
         <div className="flex items-center justify-center gap-3">

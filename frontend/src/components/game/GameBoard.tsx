@@ -478,6 +478,7 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
               eligibilityMap={playerEligibilityMap}
               targetMap={playerTargetMap}
               compact={isCompact}
+              dimmed={!isMyTurn}
             />
           )}
 
