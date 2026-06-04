@@ -29,6 +29,10 @@ export function getSocket() {
       autoConnect: false,
       transports: ['websocket', 'polling'],
       auth: { token: authToken },
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1_000,
+      reconnectionDelayMax: 10_000,
     });
   }
   return socket;
@@ -46,4 +50,14 @@ export function disconnect() {
   if (socket?.connected) {
     socket.disconnect();
   }
+}
+
+// ─── Keepalive: reconectar al volver a la tab ────────────────
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && socket && !socket.connected) {
+      console.log('[socket] tab visible again — reconnecting');
+      socket.connect();
+    }
+  });
 }

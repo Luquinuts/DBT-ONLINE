@@ -360,10 +360,6 @@ export function handleGameDisconnect(
   // Clean up
   gameRegistry.removeGame(roomCode);
 
-  // Update room status back to 'waiting' or mark as 'finished'
-  // (The rooms map is managed by index.ts — this module doesn't have
-  //  a reference to it, so room status is handled in the parent.)
-
   console.log(
     `[game:disconnect] player ${playerId} left — game ${roomCode} ended. ` +
       `Winner: ${opponentPlayerId}`

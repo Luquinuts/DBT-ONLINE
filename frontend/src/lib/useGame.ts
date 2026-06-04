@@ -75,8 +75,20 @@ export function useGame(
       socket.connect();
     }
 
-    // Pedir estado actual al montar — cubre navegación desde el lobby
-    socket.emit('game:request_sync', roomCode);
+    // ── Re-sync helpers ─────────────────────────────────────
+    const requestSync = () => {
+      if (socket.connected) {
+        socket.emit('game:request_sync', roomCode);
+      }
+    };
+
+    // ── Pedir estado al montar ─────────────────────────────
+    requestSync();
+
+    const onConnect = () => {
+      console.log('[game] socket reconnected — requesting sync');
+      requestSync();
+    };
 
     const onStateUpdate = (gameState: GameState) => {
       dispatch({ type: 'SET_GAME_STATE', payload: gameState, playerId });
@@ -92,7 +104,7 @@ export function useGame(
     const onError = (error: GameError) => {
       // Si la sala no se encuentra por empezar dos veces, pedir sync
       if (error.code === 'ROOM_NOT_FOUND' || error.code === 'NOT_ENOUGH_PLAYERS' || error.code === 'NOT_HOST') {
-        socket.emit('game:request_sync', roomCode);
+        requestSync();
         return;
       }
       dispatch({ type: 'SET_ERROR', payload: error });
@@ -103,12 +115,14 @@ export function useGame(
       dispatch({ type: 'GAME_OVER', winner: gameState.winner || '' });
     };
 
+    socket.on('connect', onConnect);
     socket.on('game:state_update', onStateUpdate);
     socket.on('game:defender_window', onDefenderWindow);
     socket.on('game:error', onError);
     socket.on('game:over', onGameOver);
 
     return () => {
+      socket.off('connect', onConnect);
       socket.off('game:state_update', onStateUpdate);
       socket.off('game:defender_window', onDefenderWindow);
       socket.off('game:error', onError);

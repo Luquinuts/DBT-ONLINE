@@ -37,6 +37,8 @@ const io = new Server<
   SocketData
 >(httpServer, {
   cors: { origin: allowedOrigins, methods: ['GET', 'POST'] },
+  pingInterval: 60_000,   // ping cada 60s
+  pingTimeout: 180_000,   // esperar 3min por pong (default: 20s)
 });
 
 app.use(cors());
