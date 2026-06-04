@@ -46,7 +46,6 @@ export default function CatalogPage() {
   }, []);
 
   const closeModal = () => {
-    setSelectedChar(null);
     setSelectedBf(null);
     setSelectedCard(null);
   };
@@ -82,41 +81,58 @@ export default function CatalogPage() {
               ))}
             </div>
 
-            {/* ─── Characters Grid ───────────── */}
+            {/* ─── Characters — Master/Detail ─── */}
             {tab === 'characters' && (
-              <div className="space-y-8">
-                {typeOrder.map((t) => {
-                  const chars = data.characters.filter((c) => c.type === t);
-                  if (chars.length === 0) return null;
-                  return (
-                    <div key={t}>
-                      <h3 className={`mb-3 border-b pb-1 text-sm font-semibold uppercase tracking-wider ${typeSectionColor[t]}`}>
-                        {typeLabel[t]} ({chars.length})
-                      </h3>
-                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                        {chars.map((char) => (
-                          <button
-                            key={char.id}
-                            onClick={() => setSelectedChar(char)}
-                            className="group relative aspect-[3/4] overflow-hidden rounded-lg bg-gray-800/50 transition hover:shadow-lg hover:shadow-[#e94560]/10"
-                          >
-                            <HoloCard className="absolute inset-0">
-                              <GameImage
-                                src={getCharacterImageSrc(char.id)}
-                                alt={char.name}
-                                className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-                                fallback={<span className="text-4xl text-gray-600">?</span>}
-                              />
-                            </HoloCard>
-                            <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/80 to-transparent p-2">
-                              <p className="text-sm font-bold text-white truncate">{char.name}</p>
-                            </div>
-                          </button>
-                        ))}
+              <div className="flex flex-col gap-4 md:flex-row md:gap-6">
+                {/* Left: Character detail card */}
+                <div className="w-full md:w-80 md:sticky md:top-4 self-start">
+                  <CharacterDetailCard char={selectedChar ?? data.characters[0]} />
+                </div>
+
+                {/* Right: Scrollable icon list */}
+                <div className="flex-1 min-w-0 space-y-6">
+                  {typeOrder.map((t) => {
+                    const chars = data.characters.filter((c) => c.type === t);
+                    if (chars.length === 0) return null;
+                    return (
+                      <div key={t}>
+                        <h3 className={`mb-2 border-b pb-1 text-xs font-semibold uppercase tracking-wider ${typeSectionColor[t]}`}>
+                          {typeLabel[t]} ({chars.length})
+                        </h3>
+                        <div className="flex flex-wrap gap-2">
+                          {chars.map((char) => {
+                            const isSelected = (selectedChar ?? data.characters[0]).id === char.id;
+                            return (
+                              <button
+                                key={char.id}
+                                onClick={() => setSelectedChar(char)}
+                                className={`group flex w-20 flex-col items-center gap-1 rounded-lg p-1.5 transition ${
+                                  isSelected
+                                    ? 'bg-[#e94560]/15 ring-1 ring-[#e94560]/50'
+                                    : 'bg-gray-800/30 hover:bg-gray-700/50 hover:ring-1 hover:ring-gray-600'
+                                }`}
+                              >
+                                <div className="h-14 w-14 overflow-hidden rounded-lg bg-gray-800">
+                                  <GameImage
+                                    src={getCharacterImageSrc(char.id)}
+                                    alt={char.name}
+                                    className="h-full w-full object-cover"
+                                    fallback={<span className="flex h-full items-center justify-center text-lg text-gray-600">?</span>}
+                                  />
+                                </div>
+                                <span className={`text-[10px] font-medium truncate w-full text-center ${
+                                  isSelected ? 'text-white' : 'text-gray-400'
+                                }`}>
+                                  {char.name}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             )}
 
@@ -190,13 +206,6 @@ export default function CatalogPage() {
 
       {/* ─── Detail Modals ──────────────────────────────── */}
 
-      {/* Character Detail Modal */}
-      {selectedChar && (
-        <DetailModal onClose={closeModal}>
-          <CharacterDetail char={selectedChar} />
-        </DetailModal>
-      )}
-
       {/* Battlefield Detail Modal */}
       {selectedBf && (
         <DetailModal onClose={closeModal}>
@@ -240,7 +249,103 @@ function DetailModal({ children, onClose }: { children: React.ReactNode; onClose
   );
 }
 
-// ─── Character Detail ────────────────────────────────────────
+// ─── Character Detail Card (inline, no modal) ────────────────
+
+function CharacterDetailCard({ char }: { char: CharacterDef }) {
+  return (
+    <div className="rounded-xl border border-gray-700/80 bg-gray-900/80 overflow-hidden">
+      {/* Image */}
+      <div className="relative aspect-[3/4] w-full bg-gray-800">
+        <HoloCard className="absolute inset-0">
+          <GameImage
+            src={getCharacterImageSrc(char.id)}
+            alt={char.name}
+            className="h-full w-full object-cover"
+            fallback={<div className="h-full w-full bg-gray-800 flex items-center justify-center"><span className="text-4xl text-gray-600">?</span></div>}
+          />
+        </HoloCard>
+        {/* Type badge overlay */}
+        <div className="absolute top-3 left-3 z-10">
+          <span className={`rounded border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${typeColor[char.type] || 'border-gray-500 text-gray-400'}`}>
+            {typeLabel[char.type] || char.type}
+          </span>
+        </div>
+      </div>
+
+      {/* Info below image */}
+      <div className="p-3 space-y-3">
+        <h2 className="text-lg font-bold text-white">{char.name}</h2>
+
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-1.5 text-center">
+          <div className="rounded bg-gray-800/60 p-1.5">
+            <p className="text-[10px] text-gray-500">Vida</p>
+            <p className="text-base font-bold text-white">{char.stats.vida}</p>
+          </div>
+          <div className="rounded bg-gray-800/60 p-1.5">
+            <p className="text-[10px] text-gray-500">Lentitud</p>
+            <p className="text-base font-bold text-white">{char.stats.lentitud}</p>
+          </div>
+          <div className="rounded bg-gray-800/60 p-1.5">
+            <p className="text-[10px] text-gray-500">Ataque</p>
+            <p className="text-base font-bold text-white">{char.stats.ataque}</p>
+          </div>
+        </div>
+
+        {/* Abilities */}
+        <div className="space-y-1.5">
+          {char.abilities.pasiva && (
+            <AbilityMini label="Pasiva" name={char.abilities.pasiva.name} desc={char.abilities.pasiva.description} />
+          )}
+          {char.abilities.habilidad && (
+            <AbilityMini
+              label="Habilidad"
+              name={char.abilities.habilidad.name}
+              desc={char.abilities.habilidad.description}
+              extra={
+                char.abilities.habilidad.cooldown > 0
+                  ? `CD: ${char.abilities.habilidad.cooldown}`
+                  : char.abilities.habilidad.usesPerGame
+                    ? `${char.abilities.habilidad.usesPerGame} uso/s`
+                    : undefined
+              }
+            />
+          )}
+          {char.abilities.definitiva && (
+            <AbilityMini
+              label="Definitiva"
+              name={char.abilities.definitiva.name}
+              desc={char.abilities.definitiva.description}
+              extra={`${char.abilities.definitiva.kiCost} ki`}
+            />
+          )}
+        </div>
+
+        {/* Icons */}
+        {Object.keys(char.icons).length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {char.icons.rage && <span className="rounded bg-yellow-500/10 px-2 py-0.5 text-[10px] text-yellow-400">Rage</span>}
+            {char.icons.change && <span className="rounded bg-blue-500/10 px-2 py-0.5 text-[10px] text-blue-400">Cambio de forma</span>}
+            {char.icons.deathIcon && <span className="rounded bg-red-500/10 px-2 py-0.5 text-[10px] text-red-400">Death icon</span>}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AbilityMini({ label, name, desc, extra }: { label: string; name: string; desc: string; extra?: string }) {
+  return (
+    <div className="rounded bg-gray-800/40 p-2 text-xs">
+      <div className="flex items-center justify-between mb-0.5">
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-[#e94560]">{label}</span>
+        {extra && <span className="text-[10px] text-gray-500">{extra}</span>}
+      </div>
+      <p className="font-medium text-white text-xs">{name}</p>
+      <p className="mt-0.5 text-[11px] leading-relaxed text-gray-400">{desc}</p>
+    </div>
+  );
+}
 
 const typeLabel: Record<string, string> = {
   TANQUE: 'Tanque',
@@ -261,104 +366,6 @@ const typeSectionColor: Record<string, string> = {
 };
 
 const typeOrder = ['TANQUE', 'DAMAGE', 'SUPPORT'] as const;
-
-function CharacterDetail({ char }: { char: CharacterDef }) {
-  return (
-    <div className="flex gap-4">
-      {/* Image — left */}
-      <div className="w-52 flex-shrink-0 overflow-hidden rounded-lg">
-        <HoloCard className="w-full">
-          <GameImage
-            src={getCharacterImageSrc(char.id)}
-            alt={char.name}
-            className="w-full object-cover"
-            fallback={<div className="h-72 w-full bg-gray-800" />}
-          />
-        </HoloCard>
-      </div>
-
-      {/* Data — right */}
-      <div className="flex min-w-0 flex-1 flex-col gap-3">
-        {/* Header */}
-        <div className="flex items-start justify-between">
-          <div>
-            <h2 className="text-xl font-bold text-white">{char.name}</h2>
-            <span className={`inline-block mt-1 rounded border px-2 py-0.5 text-xs font-medium ${typeColor[char.type] || 'border-gray-500 text-gray-400'}`}>
-              {typeLabel[char.type] || char.type}
-            </span>
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-2 text-center text-sm">
-          <div className="rounded bg-gray-700/50 p-2">
-            <p className="text-xs text-gray-400">Vida</p>
-            <p className="text-lg font-bold text-white">{char.stats.vida}</p>
-          </div>
-          <div className="rounded bg-gray-700/50 p-2">
-            <p className="text-xs text-gray-400">Lentitud</p>
-            <p className="text-lg font-bold text-white">{char.stats.lentitud}</p>
-          </div>
-          <div className="rounded bg-gray-700/50 p-2">
-            <p className="text-xs text-gray-400">Ataque</p>
-            <p className="text-lg font-bold text-white">{char.stats.ataque}</p>
-          </div>
-        </div>
-
-        {/* Abilities */}
-        <div className="space-y-2">
-          {char.abilities.pasiva && (
-            <AbilityDetail label="Pasiva" name={char.abilities.pasiva.name} desc={char.abilities.pasiva.description} />
-          )}
-          {char.abilities.habilidad && (
-            <AbilityDetail
-              label="Habilidad"
-              name={char.abilities.habilidad.name}
-              desc={char.abilities.habilidad.description}
-              extra={
-                char.abilities.habilidad.cooldown > 0
-                  ? `CD: ${char.abilities.habilidad.cooldown}`
-                  : char.abilities.habilidad.usesPerGame
-                    ? `${char.abilities.habilidad.usesPerGame} uso/s`
-                    : undefined
-              }
-            />
-          )}
-          {char.abilities.definitiva && (
-            <AbilityDetail
-              label="Definitiva"
-              name={char.abilities.definitiva.name}
-              desc={char.abilities.definitiva.description}
-              extra={`${char.abilities.definitiva.kiCost} ki`}
-            />
-          )}
-        </div>
-
-        {/* Icons */}
-        {Object.keys(char.icons).length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {char.icons.rage && <span className="rounded bg-yellow-500/10 px-2 py-0.5 text-xs text-yellow-400">Rage</span>}
-            {char.icons.change && <span className="rounded bg-blue-500/10 px-2 py-0.5 text-xs text-blue-400">Cambio de forma</span>}
-            {char.icons.deathIcon && <span className="rounded bg-red-500/10 px-2 py-0.5 text-xs text-red-400">Death icon</span>}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function AbilityDetail({ label, name, desc, extra }: { label: string; name: string; desc: string; extra?: string }) {
-  return (
-    <div className="rounded bg-gray-700/30 p-3 text-sm">
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-xs font-semibold uppercase tracking-wide text-[#e94560]">{label}</span>
-        {extra && <span className="text-xs text-gray-500">{extra}</span>}
-      </div>
-      <p className="font-medium text-white">{name}</p>
-      <p className="mt-1 text-xs leading-relaxed text-gray-400">{desc}</p>
-    </div>
-  );
-}
 
 // ─── Battlefield Detail ──────────────────────────────────────
 
