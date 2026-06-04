@@ -7,7 +7,6 @@ import type {
   BattlefieldDef,
   GameError,
   PendingAttack,
-  TurnLogEntry,
 } from '@dbt-online/shared';
 
 export interface GameUIState {
@@ -48,8 +47,6 @@ export interface GameUIState {
   draftPhase: 'PICKING' | 'PLACING' | 'DONE' | null;
   currentPicker: number | null;
 
-  // Log
-  logEntries: TurnLogEntry[];
 }
 
 export type GameUIAction =
@@ -102,7 +99,6 @@ export function createInitialGameUIState(): GameUIState {
     draftPhase: null,
     currentPicker: null,
 
-    logEntries: [],
   };
 }
 
@@ -149,16 +145,6 @@ export function gameReducer(
         currentPicker = gameState.draftState.currentPicker;
       }
 
-      // Append only new log entries
-      const existingCount = state.logEntries.length;
-      const newTurnLog = gameState.turnLog
-        ? gameState.turnLog.slice(existingCount)
-        : [];
-      const logEntries =
-        newTurnLog.length > 0
-          ? [...state.logEntries, ...newTurnLog]
-          : state.logEntries;
-
       return {
         ...state,
         gameState,
@@ -176,7 +162,6 @@ export function gameReducer(
         draftPicks,
         draftPhase,
         currentPicker,
-        logEntries,
       };
     }
 

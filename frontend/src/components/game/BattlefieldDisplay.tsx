@@ -30,7 +30,7 @@ export function BattlefieldDisplay({
       {/* ─── Battlefield TCG Card ─────────────────────────────── */}
       <button
         onClick={() => setShowModal(true)}
-        className="group relative aspect-[3/4] w-48 flex-shrink-0 overflow-hidden rounded-xl border-2 border-yellow-700/50 bg-gray-900 shadow-lg shadow-black/30 transition hover:border-yellow-500/70 hover:shadow-xl hover:shadow-yellow-900/20"
+        className="group relative aspect-[3/4] w-48 flex-shrink-0 overflow-hidden rounded-xl bg-gray-900 shadow-lg shadow-black/30 transition hover:shadow-xl hover:shadow-yellow-900/20"
       >
         {/* Holo card art */}
         <HoloCard className="absolute inset-0" disabled={isNullified}>

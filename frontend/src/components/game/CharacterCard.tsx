@@ -41,25 +41,25 @@ export function CharacterCard({
     );
   }
 
-  // ─── Glow / border classes ────────────────────────────────
-  const borderClass = isDead
-    ? 'border-gray-700 opacity-40'
+  // ─── Glow / feedback classes ──────────────────────────────
+  const feedbackClass = isDead
+    ? 'opacity-40'
     : isSelected
-      ? 'border-blue-400 shadow-[0_0_14px_rgba(96,165,250,0.6)] ring-2 ring-blue-500/50'
+      ? 'shadow-[0_0_14px_rgba(96,165,250,0.6)] ring-2 ring-blue-500/50'
       : canTarget
-        ? 'border-red-400 shadow-[0_0_14px_rgba(248,113,113,0.6)] ring-2 ring-red-500/50 cursor-pointer'
+        ? 'shadow-[0_0_14px_rgba(248,113,113,0.6)] ring-2 ring-red-500/50 cursor-pointer'
         : isEligible
-          ? 'border-green-400 shadow-[0_0_14px_rgba(74,222,128,0.6)] ring-2 ring-green-500/50 cursor-pointer'
-          : 'border-gray-600';
+          ? 'shadow-[0_0_14px_rgba(74,222,128,0.6)] ring-2 ring-green-500/50 cursor-pointer'
+          : '';
 
   return (
     <div
       onClick={isDead ? undefined : onClick}
       className={`
-        relative flex w-48 flex-col overflow-hidden rounded-xl border-2
+        relative flex w-48 flex-col overflow-hidden rounded-xl
         bg-gray-900
         transition-all duration-200 select-none
-        ${borderClass}
+        ${feedbackClass}
         ${!isDead && onClick ? 'hover:scale-[1.03]' : ''}
         ${isDefending ? 'ring-2 ring-yellow-400/60' : ''}
       `}

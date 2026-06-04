@@ -9,7 +9,6 @@ import { HandArea } from './HandArea';
 import { ActionBar } from './ActionBar';
 import { CardPlayPanel } from './CardPlayPanel';
 import { BattlefieldDisplay } from './BattlefieldDisplay';
-import { GameLog } from './GameLog';
 import { CharacterModal } from './CharacterModal';
 import './card-effects.css';
 
@@ -38,7 +37,6 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
     selectedCharacter,
     selectedCard,
     error,
-    logEntries,
     flyingCard,
     attackAnimation,
   } = state;
@@ -470,10 +468,6 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
             />
           )}
 
-          {/* ─── Game log ───────────────────────────────────── */}
-          {logEntries.length > 0 && (
-            <GameLog entries={logEntries} maxVisible={10} />
-          )}
         </div>
       </div>
 

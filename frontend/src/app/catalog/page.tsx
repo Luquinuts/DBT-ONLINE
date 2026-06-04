@@ -97,7 +97,7 @@ export default function CatalogPage() {
                           <button
                             key={char.id}
                             onClick={() => setSelectedChar(char)}
-                            className="group relative aspect-[3/4] overflow-hidden rounded-lg border border-gray-700 bg-gray-800/50 transition hover:border-[#e94560]/50 hover:shadow-lg hover:shadow-[#e94560]/10"
+                            className="group relative aspect-[3/4] overflow-hidden rounded-lg bg-gray-800/50 transition hover:shadow-lg hover:shadow-[#e94560]/10"
                           >
                             <HoloCard className="absolute inset-0">
                               <GameImage
@@ -126,7 +126,7 @@ export default function CatalogPage() {
                   <button
                     key={bf.id}
                     onClick={() => setSelectedBf(bf)}
-                    className="group relative aspect-[16/10] overflow-hidden rounded-lg border border-gray-700 bg-gray-800/50 transition hover:border-[#e94560]/50 hover:shadow-lg hover:shadow-[#e94560]/10"
+                    className="group relative aspect-[16/10] overflow-hidden rounded-lg bg-gray-800/50 transition hover:shadow-lg hover:shadow-[#e94560]/10"
                   >
                     <HoloCard className="absolute inset-0">
                       <GameImage
@@ -167,9 +167,12 @@ export default function CatalogPage() {
                         }
                       />
                     </HoloCard>
-                    <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/80 to-transparent p-2">
+                    <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-2 pb-2 pt-8">
                       <p className="text-sm font-bold text-white truncate">
                         {card.name}
+                      </p>
+                      <p className="text-[11px] text-gray-400 leading-tight mt-0.5 line-clamp-2">
+                        {card.effect}
                       </p>
                     </div>
                   </button>
