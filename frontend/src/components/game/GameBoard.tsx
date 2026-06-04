@@ -473,20 +473,6 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
             />
           )}
 
-          {/* ─── Card play confirmation panel ──────────────── */}
-          {currentPlayer && phase === 'WAITING_FOR_ACTION' && selectedCard && (
-            <CardPlayPanel
-              cardId={selectedCard}
-              phase={phase}
-              selectedCharacter={selectedCharacter}
-              onPlay={handlePlaySelectedCard}
-              onCancel={() => {
-                actions.selectCard(null);
-                actions.selectCharacter(null);
-              }}
-            />
-          )}
-
           {/* ─── Hand area (minimized) ─────────────────────── */}
           {currentPlayer && phase !== 'WAITING_FOR_ACTION' && (
             <HandArea
@@ -502,18 +488,37 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
 
       {/* ─── Hand overlay (WAITING_FOR_ACTION) ───────────── */}
       {currentPlayer && phase === 'WAITING_FOR_ACTION' && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-gray-900/95 backdrop-blur-md border-t border-gray-700/80 px-4 pb-4 pt-4 shadow-[0_-8px_20px_rgba(0,0,0,0.5)]">
-          <div className="flex justify-center gap-3 overflow-x-auto pb-1">
-            {currentPlayer.hand.map((cardId) => (
-              <CardInHand
-                key={cardId}
-                cardId={cardId}
-                isPlayable={true}
-                isSelected={selectedCard === cardId}
-                onClick={() => handleCardClick(cardId)}
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-gray-900/95 backdrop-blur-md border-t border-gray-700/80 px-4 pb-4 pt-3 shadow-[0_-8px_20px_rgba(0,0,0,0.5)]">
+          {/* ─── Card play panel (when card selected) ──────────── */}
+          {selectedCard && (
+            <div className="mb-3">
+              <CardPlayPanel
+                cardId={selectedCard}
+                phase={phase}
+                selectedCharacter={selectedCharacter}
+                onPlay={handlePlaySelectedCard}
+                onCancel={() => {
+                  actions.selectCard(null);
+                  actions.selectCharacter(null);
+                }}
               />
-            ))}
-          </div>
+            </div>
+          )}
+
+          {/* ─── Hand cards row ──────────────────────────────── */}
+          {currentPlayer.hand.length > 0 && (
+            <div className="flex justify-center gap-3 overflow-x-auto pb-1">
+              {currentPlayer.hand.map((cardId) => (
+                <CardInHand
+                  key={cardId}
+                  cardId={cardId}
+                  isPlayable={true}
+                  isSelected={selectedCard === cardId}
+                  onClick={() => handleCardClick(cardId)}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
