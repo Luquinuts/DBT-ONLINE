@@ -108,6 +108,10 @@ export class TurnManager {
    */
   getEligibleAttackers(state: GameStateManager): string[] {
     const cpi = state.getCurrentPlayerIndex();
+    const player = state.getPlayer(cpi);
+    // Player-level gate: only one attack per turn
+    if (player.hasAttackedThisTurn) return [];
+
     const alive = state.getAliveCharacters(cpi);
     return alive
       .filter((c) => c.advanceCounter >= c.currentLentitud && !c.hasAttackedThisTurn)

@@ -136,7 +136,8 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
         const canActAsAttacker =
           phase === 'ATTACK' &&
           character.advanceCounter >= character.currentLentitud &&
-          !character.hasAttackedThisTurn;
+          !character.hasAttackedThisTurn &&
+          !currentPlayer?.hasAttackedThisTurn;
 
         const canCardTarget =
           phase === 'WAITING_FOR_ACTION' &&
@@ -232,7 +233,8 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
         if (
           phase === 'ATTACK' &&
           character.advanceCounter >= character.currentLentitud &&
-          !character.hasAttackedThisTurn
+          !character.hasAttackedThisTurn &&
+          !currentPlayer?.hasAttackedThisTurn
         ) {
           actions.selectCharacter(
             selectedCharacter === characterId ? null : characterId,

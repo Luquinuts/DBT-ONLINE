@@ -340,6 +340,18 @@ export class ActionValidator {
       };
     }
 
+    // Player-level gate: only one attack per turn
+    const currentPlayer = state.getPlayer(playerIndex);
+    if (currentPlayer.hasAttackedThisTurn) {
+      return {
+        valid: false,
+        error: {
+          code: 'ALREADY_ATTACKED',
+          message: 'You have already attacked this turn.',
+        },
+      };
+    }
+
     // Check advanceCounter >= lentitud (unless it's ultimate/special)
     // For NORMAL attacks, check advance
     if (action.attackType === 'NORMAL') {

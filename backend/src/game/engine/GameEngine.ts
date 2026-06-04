@@ -380,8 +380,9 @@ export class GameEngine {
       };
     }
 
-    // Mark attacker as having attacked this turn (prevents double attack)
+    // Mark attacker and player as having attacked this turn (one attack per turn)
     attacker.hasAttackedThisTurn = true;
+    this.state.getCurrentPlayer().hasAttackedThisTurn = true;
 
     // Check if definitiva has sufficient ki — the attacker has the ability
     if (action.attackType === 'DEFINITIVA') {
