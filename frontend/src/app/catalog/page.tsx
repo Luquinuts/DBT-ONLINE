@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import SidebarLayout from '@/components/SidebarLayout';
 import { GameImage } from '@/components/game/GameImage';
 import { HoloCard } from '@/components/game/HoloCard';
-import { getCharacterImageSrc, getCharacterIconSrc, getBattlefieldImageSrc, getCardImageSrc } from '@/lib/assets';
+import { getCharacterImageSrc, getBattlefieldImageSrc, getCardImageSrc } from '@/lib/assets';
+import { CharacterPickCard } from '@/components/game/draft/CharacterPickCard';
 import { CARD_DISPLAY } from '@/data/card-display';
 import type { CharacterDef, BattlefieldDef, CardDef } from '@dbt-online/shared';
 
@@ -84,7 +85,7 @@ export default function CatalogPage() {
             {/* ─── Characters — Master/Detail ─── */}
             {tab === 'characters' && (
               <div className="flex flex-col gap-4 md:flex-row md:gap-6">
-                {/* Left: Scrollable icon list */}
+                {/* Left: Character icon selector (same as game draft) */}
                 <div className="w-full md:w-64 md:shrink-0 space-y-6">
                   {typeOrder.map((t) => {
                     const chars = data.characters.filter((c) => c.type === t);
@@ -94,33 +95,16 @@ export default function CatalogPage() {
                         <h3 className={`mb-2 border-b pb-1 text-xs font-semibold uppercase tracking-wider ${typeSectionColor[t]}`}>
                           {typeLabel[t]} ({chars.length})
                         </h3>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="grid grid-cols-3 gap-2">
                           {chars.map((char) => {
-                            const isSelected = (selectedChar ?? data.characters[0]).id === char.id;
+                            const selected = (selectedChar ?? data.characters[0]).id === char.id;
                             return (
-                              <button
+                              <CharacterPickCard
                                 key={char.id}
+                                characterId={char.id}
                                 onClick={() => setSelectedChar(char)}
-                                className={`group flex w-[68px] flex-col items-center gap-1 rounded-lg p-1.5 transition ${
-                                  isSelected
-                                    ? 'bg-[#e94560]/15 ring-1 ring-[#e94560]/50'
-                                    : 'bg-gray-800/30 hover:bg-gray-700/50 hover:ring-1 hover:ring-gray-600'
-                                }`}
-                              >
-                                <div className="h-[52px] w-[52px] overflow-hidden rounded-lg bg-gray-800">
-                                  <GameImage
-                                    src={getCharacterIconSrc(char.id)}
-                                    alt={char.name}
-                                    className="h-full w-full object-cover"
-                                    fallback={<span className="flex h-full items-center justify-center text-lg text-gray-600">?</span>}
-                                  />
-                                </div>
-                                <span className={`text-[10px] font-medium truncate w-full text-center ${
-                                  isSelected ? 'text-white' : 'text-gray-400'
-                                }`}>
-                                  {char.name}
-                                </span>
-                              </button>
+                                selected={selected}
+                              />
                             );
                           })}
                         </div>
