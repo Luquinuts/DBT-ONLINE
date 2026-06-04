@@ -5,6 +5,7 @@ import SidebarLayout from '@/components/SidebarLayout';
 import { GameImage } from '@/components/game/GameImage';
 import { HoloCard } from '@/components/game/HoloCard';
 import { getCharacterImageSrc, getBattlefieldImageSrc, getCardImageSrc } from '@/lib/assets';
+import { CARD_DISPLAY } from '@/data/card-display';
 import type { CharacterDef, BattlefieldDef, CardDef } from '@dbt-online/shared';
 
 interface CatalogData {
@@ -151,32 +152,36 @@ export default function CatalogPage() {
             {/* ─── Cards Grid ─────────────────── */}
             {tab === 'cards' && (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                {data.cards.map((card) => (
-                  <button
-                    key={card.id}
-                    onClick={() => setSelectedCard(card)}
-                    className="group relative aspect-[3/4] overflow-hidden rounded-lg border border-gray-700 bg-gray-800/50 transition hover:border-[#e94560]/50 hover:shadow-lg hover:shadow-[#e94560]/10"
-                  >
-                    <HoloCard className="absolute inset-0">
-                      <GameImage
-                        src={getCardImageSrc(card.id) ?? ''}
-                        alt={card.name}
-                        className="h-full w-full object-contain p-2 transition duration-300 group-hover:scale-105"
-                        fallback={
-                          <span className="text-4xl text-gray-600">🃏</span>
-                        }
-                      />
-                    </HoloCard>
-                    <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-2 pb-2 pt-8">
-                      <p className="text-sm font-bold text-white truncate">
-                        {card.name}
-                      </p>
-                      <p className="text-[11px] text-gray-400 leading-tight mt-0.5 line-clamp-2">
-                        {card.effect}
-                      </p>
-                    </div>
-                  </button>
-                ))}
+                {data.cards.map((card) => {
+                  const baseId = card.id.replace(/_\d+$/, '');
+                  const cardDisplay = CARD_DISPLAY[baseId];
+                  return (
+                    <button
+                      key={card.id}
+                      onClick={() => setSelectedCard(card)}
+                      className="group relative aspect-[3/4] overflow-hidden rounded-lg border border-gray-700 bg-gray-800/50 transition hover:border-[#e94560]/50 hover:shadow-lg hover:shadow-[#e94560]/10"
+                    >
+                      <HoloCard className="absolute inset-0">
+                        <GameImage
+                          src={getCardImageSrc(card.id) ?? ''}
+                          alt={card.name}
+                          className="h-full w-full object-contain p-2 transition duration-300 group-hover:scale-105"
+                          fallback={
+                            <span className="text-4xl text-gray-600">🃏</span>
+                          }
+                        />
+                      </HoloCard>
+                      <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/90 via-black/60 to-transparent px-2 pb-2 pt-8">
+                        <p className="text-sm font-bold text-white truncate">
+                          {cardDisplay?.displayName ?? card.name}
+                        </p>
+                        <p className="text-[11px] text-gray-400 leading-tight mt-0.5 line-clamp-2">
+                          {cardDisplay?.effect ?? card.effect}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </>
@@ -391,6 +396,8 @@ const cardColors: Record<string, string> = {
 
 function CardDetail({ card }: { card: CardDef }) {
   const styleClass = cardColors[card.category] || 'bg-gray-800 border-gray-700';
+  const baseId = card.id.replace(/_\d+$/, '');
+  const cardDisplay = CARD_DISPLAY[baseId];
   return (
     <div className="flex gap-4">
       <div className={`w-48 flex-shrink-0 overflow-hidden rounded-lg border ${styleClass}`}>
@@ -405,7 +412,7 @@ function CardDetail({ card }: { card: CardDef }) {
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-3">
         <div className="flex items-start justify-between">
-          <h2 className="text-xl font-bold text-white">{card.name}</h2>
+          <h2 className="text-xl font-bold text-white">{cardDisplay?.displayName ?? card.name}</h2>
           <span className="rounded bg-gray-700/50 px-2 py-0.5 text-xs font-medium text-gray-400">
             {card.category}
           </span>
@@ -414,8 +421,8 @@ function CardDetail({ card }: { card: CardDef }) {
         <p className="text-sm leading-relaxed text-gray-400">{card.description}</p>
 
         <div className="flex flex-wrap gap-1">
-          <span className="rounded bg-gray-700/50 px-2 py-0.5 text-xs font-mono text-gray-500">
-            {card.effect}
+          <span className="rounded bg-gray-700/50 px-2 py-0.5 text-xs text-gray-400">
+            {cardDisplay?.effect ?? card.effect}
           </span>
           {card.isDefense && (
             <span className="rounded bg-yellow-500/10 px-2 py-0.5 text-xs text-yellow-400">Defensa</span>
