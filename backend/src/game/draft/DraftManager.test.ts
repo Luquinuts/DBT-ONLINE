@@ -138,7 +138,7 @@ describe('DraftManager', () => {
       expect(state.getPlayer(0).characters.length).toBe(3);
     });
 
-    it('transitions to BATTLEFIELD phase when both players place', () => {
+    it('transitions to PRE_BATTLE phase when both players place', () => {
       completePicks();
       const p1Picks = state.getDraftState()!.picks[0];
       const p2Picks = state.getDraftState()!.picks[1];
@@ -150,7 +150,7 @@ describe('DraftManager', () => {
       expect(result.success).toBe(true);
       expect(result.readyToStart).toBe(true);
       expect(state.getDraftState()!.phase).toBe('DONE');
-      expect(state.getState().phase).toBe('BATTLEFIELD');
+      expect(state.getState().phase).toBe('PRE_BATTLE');
     });
 
     it('rejects placement if not in PLACING phase', () => {

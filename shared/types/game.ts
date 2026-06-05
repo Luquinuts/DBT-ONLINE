@@ -130,7 +130,8 @@ export interface PlayerGameState {
 // ─── Pre-battle state ───────────────────────────────────────────
 
 export interface PreBattleState {
-  stage: 'reveal' | 'countdown' | 'fight';
+  stage: 'reveal' | 'countdown' | 'fight' | 'ban';
+  pendingBan: { playerIndexes: number[] } | null;
 }
 
 // ─── Full game state ────────────────────────────────────────────
@@ -150,6 +151,7 @@ export interface GameState {
   turnLog: TurnLogEntry[];
   secondsRemaining: number | null;
   preBattle: PreBattleState | null;
+  bannedCharacters: string[];
 }
 
 export interface DraftState {
@@ -191,7 +193,8 @@ export type GameAction =
   | { type: 'SWITCH_FORM'; characterId: string; targetForm: string }
   | { type: 'DRAGON_REVIVE'; targetCharacterId: string }
   | { type: 'END_TURN' }
-  | { type: 'REDRAW' };
+  | { type: 'REDRAW' }
+  | { type: 'BAN_CHARACTER'; characterId: string };
 
 // ─── Game error ─────────────────────────────────────────────────
 

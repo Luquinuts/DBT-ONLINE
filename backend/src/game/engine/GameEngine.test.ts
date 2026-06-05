@@ -57,7 +57,8 @@ function completeDraft(engine: GameEngine): { p1Picks: string[]; p2Picks: string
 }
 
 /**
- * Places characters for both players and returns the state after battlefield phase.
+ * Places characters for both players and completes the PRE_BATTLE phase,
+ * returning the state in WAITING_FOR_ACTION.
  */
 function placeCharacters(engine: GameEngine, p1Picks: string[], p2Picks: string[]): void {
   let r = engine.handleAction(P1, { type: 'PLACE_CHARACTERS', order: p1Picks });
@@ -66,9 +67,16 @@ function placeCharacters(engine: GameEngine, p1Picks: string[], p2Picks: string[
   r = engine.handleAction(P2, { type: 'PLACE_CHARACTERS', order: p2Picks });
   expect(r.success).toBe(true);
 
-  const s = engine.getState();
-  expect(s.phase).toBe('WAITING_FOR_ACTION');
+  // After both place, phase should be PRE_BATTLE (not WAITING_FOR_ACTION)
+  let s = engine.getState();
+  expect(s.phase).toBe('PRE_BATTLE');
   expect(s.battlefield).not.toBeNull();
+
+  // Complete the pre-battle countdown to reach WAITING_FOR_ACTION
+  engine.completePreBattle();
+
+  s = engine.getState();
+  expect(s.phase).toBe('WAITING_FOR_ACTION');
   expect(s.players[0].hand.length).toBeGreaterThan(0);
   expect(s.players[1].hand.length).toBeGreaterThan(0);
 }
@@ -188,8 +196,8 @@ describe('GameEngine Integration', () => {
     });
   });
 
-  describe('Battlefield phase', () => {
-    it('transitions correctly after draft placement', () => {
+  describe('Pre-battle phase', () => {
+    it('transitions through PRE_BATTLE to WAITING_FOR_ACTION', () => {
       const engine = createEngine();
       const { p1Picks, p2Picks } = completeDraft(engine);
 

@@ -20,7 +20,21 @@ export class PreBattleManager {
   private stateManager: GameStateManager | null = null;
   private onTick: ((state: GameState) => void) | null = null;
   private onComplete: (() => void) | null = null;
-  private completeTimeout: NodeJS.Timeout | null = null;
+  private fightDelayMs: number;
+  private tickIntervalMs: number;
+  private banActive: boolean = false;
+
+  constructor(fightDelayMs: number = 600, tickIntervalMs: number = 1000) {
+    this.fightDelayMs = fightDelayMs;
+    this.tickIntervalMs = tickIntervalMs;
+  }
+
+  /**
+   * Whether the ban stage is currently active.
+   */
+  isBanStageActive(): boolean {
+    return this.banActive;
+  }
 
   /**
    * Start the 5-second pre-battle countdown.
@@ -40,12 +54,125 @@ export class PreBattleManager {
 
     // ── Initial state: reveal with 5 seconds ────────────────
     gameState.setSecondsRemaining(5);
-    gameState.setPreBattle({ stage: 'reveal' });
+    gameState.setPreBattle({ stage: 'reveal', pendingBan: null });
     onTick(gameState.toJSON());
 
-    // ── Give the reveal a moment, then start the countdown ──
-    // Use a brief delay so the reveal stage is visible before numbers start
-    this.timer = setInterval(() => {
+    // ── Check if ban stage is needed (Kame House) ──────────
+    const bfBase = gameState.getState().battlefield?.effect?.split(':')[0];
+    if (bfBase === 'disable_character') {
+      this.startBanStage(gameState, onTick);
+      return;
+    }
+
+    // ── Start the countdown chain using recursive setTimeout ──
+    this.scheduleNextTick(gameState, onTick, onComplete);
+  }
+
+  /**
+   * Enter the ban stage (Kame House mechanic).
+   * Sets stage to 'ban', initializes pendingBan tracker, and broadcasts.
+   * The countdown is NOT started — it waits for both players to submit.
+   */
+  private startBanStage(
+    gameState: GameStateManager,
+    onTick: (state: GameState) => void,
+  ): void {
+    this.banActive = true;
+    gameState.setPreBattle({
+      stage: 'ban',
+      pendingBan: { playerIndexes: [] },
+    });
+    gameState.setSecondsRemaining(null);
+    onTick(gameState.toJSON());
+  }
+
+  /**
+   * Handle a player's ban action during the ban stage.
+   *
+   * Flow:
+   *  1. Validate the action (stage, submission status, character ownership, last-alive guard)
+   *  2. Apply the ban: set isAlive = false, add to bannedCharacters
+   *  3. Mark player as submitted
+   *  4. Broadcast updated state
+   *  5. If both players have submitted → clear ban state, start countdown
+   */
+  handleBanAction(playerId: string, characterId: string): { success: boolean; error?: string } {
+    if (!this.stateManager || !this.onTick || !this.banActive) {
+      return { success: false, error: 'Ban stage is not active.' };
+    }
+
+    const gs = this.stateManager.getState();
+
+    // Must be in ban stage
+    if (!gs.preBattle || gs.preBattle.stage !== 'ban') {
+      return { success: false, error: 'Ban stage is not active.' };
+    }
+
+    // Find player index
+    const playerIndex = gs.players.findIndex((p) => p.playerId === playerId);
+    if (playerIndex === -1) {
+      return { success: false, error: 'Player not found.' };
+    }
+
+    // Check hasn't already submitted
+    if (gs.preBattle.pendingBan?.playerIndexes.includes(playerIndex)) {
+      return { success: false, error: 'You have already submitted a ban.' };
+    }
+
+    // Validate character belongs to this player and is alive
+    const character = this.stateManager.getCharacter(playerIndex, characterId);
+    if (!character) {
+      return { success: false, error: 'Character not found in your roster.' };
+    }
+    if (!character.isAlive) {
+      return { success: false, error: 'Character is already dead or banned.' };
+    }
+
+    // Validate it's not the last alive character for that player
+    const aliveCount = this.stateManager.getAliveCharacters(playerIndex).length;
+    if (aliveCount <= 1) {
+      return { success: false, error: 'Cannot ban the last alive character.' };
+    }
+
+    // ── Apply the ban ──────────────────────────────────────────
+    character.isAlive = false;
+    gs.bannedCharacters.push(characterId);
+
+    // Track submission
+    if (gs.preBattle.pendingBan) {
+      gs.preBattle.pendingBan.playerIndexes.push(playerIndex);
+    }
+
+    // Broadcast updated state
+    this.onTick(this.stateManager.toJSON());
+
+    // ── Check if both players have submitted ─────────────────
+    if (gs.preBattle?.pendingBan?.playerIndexes.length === 2) {
+      // Clear ban stage state (keep bannedCharacters), start countdown
+      gs.preBattle.pendingBan = null;
+      gs.preBattle.stage = 'reveal';
+      this.stateManager.setSecondsRemaining(5);
+
+      // Broadcast the reveal state
+      this.onTick(this.stateManager.toJSON());
+
+      // Start the countdown chain
+      this.banActive = false;
+      this.scheduleNextTick(this.stateManager, this.onTick, this.onComplete!);
+    }
+
+    return { success: true };
+  }
+
+  private scheduleNextTick(
+    gameState: GameStateManager,
+    onTick: (state: GameState) => void,
+    onComplete: () => void,
+  ): void {
+    if (this.timer !== null) return; // Already stopped
+
+    this.timer = setTimeout(() => {
+      this.timer = null;
       const gs = gameState.getState();
       if (gs.secondsRemaining === null) return;
 
@@ -54,25 +181,26 @@ export class PreBattleManager {
 
       if (remaining <= 0) {
         // ── Countdown done: FIGHT! ──────────────────────────
-        this.stopCountdown();
-        gameState.setPreBattle({ stage: 'fight' });
+        gameState.setPreBattle({ stage: 'fight', pendingBan: null });
         gameState.setSecondsRemaining(0);
         onTick(gameState.toJSON());
 
         // ── Brief pause so the client can show FIGHT! ───────
-        this.completeTimeout = setTimeout(() => {
+        this.timer = setTimeout(() => {
+          this.timer = null;
           this.cleanup();
           if (this.onComplete) {
             this.onComplete();
           }
-        }, 600);
+        }, this.fightDelayMs);
         return;
       }
 
       // ── Normal tick ──────────────────────────────────────
-      gameState.setPreBattle({ stage: 'countdown' });
+      gameState.setPreBattle({ stage: 'countdown', pendingBan: null });
       onTick(gameState.toJSON());
-    }, 1000);
+      this.scheduleNextTick(gameState, onTick, onComplete);
+    }, this.tickIntervalMs);
   }
 
   /**
@@ -81,12 +209,8 @@ export class PreBattleManager {
    */
   stopCountdown(): void {
     if (this.timer) {
-      clearInterval(this.timer);
+      clearTimeout(this.timer);
       this.timer = null;
-    }
-    if (this.completeTimeout) {
-      clearTimeout(this.completeTimeout);
-      this.completeTimeout = null;
     }
   }
 
@@ -99,5 +223,6 @@ export class PreBattleManager {
     this.stateManager = null;
     this.onTick = null;
     this.onComplete = null;
+    this.banActive = false;
   }
 }

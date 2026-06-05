@@ -73,6 +73,9 @@ export function validPhasesForAction(actionType: GameAction['type']): GamePhase[
     case 'REDRAW':
       return ['WAITING_FOR_ACTION', 'ADVANCE', 'ATTACK'];
 
+    case 'BAN_CHARACTER':
+      return ['PRE_BATTLE'];
+
     case 'END_TURN':
       return ['END_TURN'];
 

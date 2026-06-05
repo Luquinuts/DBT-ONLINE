@@ -415,4 +415,120 @@ describe('ActionValidator', () => {
       expect(result.valid).toBe(true);
     });
   });
+
+  describe('BAN_CHARACTER validation', () => {
+    function createBanState(): GameStateManager {
+      const state = new GameStateManager('TEST', 'p1', 'p2', ALL_CHAR_IDS);
+      const gs = state.getState();
+
+      gs.phase = 'PRE_BATTLE';
+      gs.preBattle = { stage: 'ban', pendingBan: { playerIndexes: [] } };
+      gs.bannedCharacters = [];
+      gs.battlefield = { id: 'kamehouse', name: 'Kamehouse', effect: 'disable_character', description: '' };
+
+      // Place 3 characters per player
+      const defs0 = ['ssj-broly', 'ssj-blue-vegeta', 'ssj2-gohan'].map(
+        id => state.getCharacterDef(id)!,
+      );
+      gs.players[0].characters = defs0.map(d => createCharacterState(d));
+
+      const defs1 = ['ssj3-gotenks', 'golden-frieza', 'perfect-cell'].map(
+        id => state.getCharacterDef(id)!,
+      );
+      gs.players[1].characters = defs1.map(d => createCharacterState(d));
+
+      return state;
+    }
+
+    it('accepts a valid BAN_CHARACTER action', () => {
+      const state = createBanState();
+      const result = ActionValidator.validate(state, 0, {
+        type: 'BAN_CHARACTER',
+        characterId: 'ssj-broly',
+      });
+      expect(result.valid).toBe(true);
+    });
+
+    it('rejects BAN_CHARACTER when not in PRE_BATTLE phase', () => {
+      const state = createBanState();
+      state.getState().phase = 'WAITING_FOR_ACTION';
+      const result = ActionValidator.validate(state, 0, {
+        type: 'BAN_CHARACTER',
+        characterId: 'ssj-broly',
+      });
+      expect(result.valid).toBe(false);
+      expect(result.error?.code).toBe('INVALID_PHASE');
+    });
+
+    it('rejects BAN_CHARACTER when ban stage is not active', () => {
+      const state = createBanState();
+      state.getState().preBattle = { stage: 'reveal', pendingBan: null };
+      const result = ActionValidator.validate(state, 0, {
+        type: 'BAN_CHARACTER',
+        characterId: 'ssj-broly',
+      });
+      expect(result.valid).toBe(false);
+      expect(result.error?.code).toBe('NOT_BAN_STAGE');
+    });
+
+    it('rejects BAN_CHARACTER for character not owned by player', () => {
+      const state = createBanState();
+      // Try to ban the opponent's character
+      const result = ActionValidator.validate(state, 0, {
+        type: 'BAN_CHARACTER',
+        characterId: 'ssj3-gotenks', // P1's character
+      });
+      expect(result.valid).toBe(false);
+      expect(result.error?.code).toBe('CHARACTER_NOT_FOUND');
+    });
+
+    it('rejects BAN_CHARACTER for already dead character', () => {
+      const state = createBanState();
+      const char = state.getCharacter(0, 'ssj-broly')!;
+      char.isAlive = false;
+      const result = ActionValidator.validate(state, 0, {
+        type: 'BAN_CHARACTER',
+        characterId: 'ssj-broly',
+      });
+      expect(result.valid).toBe(false);
+      expect(result.error?.code).toBe('CHARACTER_DEAD');
+    });
+
+    it('rejects BAN_CHARACTER for the last alive character', () => {
+      const state = createBanState();
+      // Kill 2 of P0's characters
+      state.getCharacter(0, 'ssj-broly')!.isAlive = false;
+      state.getCharacter(0, 'ssj-blue-vegeta')!.isAlive = false;
+      const result = ActionValidator.validate(state, 0, {
+        type: 'BAN_CHARACTER',
+        characterId: 'ssj2-gohan',
+      });
+      expect(result.valid).toBe(false);
+      expect(result.error?.code).toBe('LAST_CHARACTER');
+    });
+
+    it('rejects BAN_CHARACTER if player already submitted', () => {
+      const state = createBanState();
+      state.getState().preBattle = {
+        stage: 'ban',
+        pendingBan: { playerIndexes: [0] }, // P0 already submitted
+      };
+      const result = ActionValidator.validate(state, 0, {
+        type: 'BAN_CHARACTER',
+        characterId: 'ssj-broly',
+      });
+      expect(result.valid).toBe(false);
+      expect(result.error?.code).toBe('ALREADY_BANNED');
+    });
+
+    it('allows BAN_CHARACTER from either player (no turn check)', () => {
+      const state = createBanState();
+      // P2 tries to ban during what would be P1's turn
+      const result = ActionValidator.validate(state, 1, {
+        type: 'BAN_CHARACTER',
+        characterId: 'ssj3-gotenks',
+      });
+      expect(result.valid).toBe(true);
+    });
+  });
 });

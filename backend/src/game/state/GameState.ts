@@ -81,6 +81,7 @@ export class GameStateManager {
       turnLog: [],
       secondsRemaining: null,
       preBattle: null,
+      bannedCharacters: [],
     };
   }
 

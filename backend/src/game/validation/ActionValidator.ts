@@ -33,11 +33,12 @@ export class ActionValidator {
       };
     }
 
-    // Check it's the player's turn (except for defender response)
+    // Check it's the player's turn (except for defender response, draft, and ban)
     if (
       action.type !== 'DEFENDER_RESPONSE' &&
       action.type !== 'DRAFT_SELECT' &&
       action.type !== 'PLACE_CHARACTERS' &&
+      action.type !== 'BAN_CHARACTER' &&
       gs.currentPlayerIndex !== playerIndex
     ) {
       return {
@@ -122,6 +123,9 @@ export class ActionValidator {
 
       case 'DRAGON_REVIVE':
         return ActionValidator.validateDragonRevive(state, action);
+
+        case 'BAN_CHARACTER':
+        return ActionValidator.validateBanCharacter(state, playerIndex, action);
 
       // No specific validation needed for these
       default:
@@ -582,6 +586,68 @@ export class ActionValidator {
       return {
         valid: false,
         error: { code: 'ALREADY_SWITCHED', message: 'Already switched forms this turn.' },
+      };
+    }
+
+    return { valid: true };
+  }
+
+  // ─── Ban character validation (Kame House) ─────────────────────
+
+  private static validateBanCharacter(
+    state: GameStateManager,
+    playerIndex: number,
+    action: GameAction & { type: 'BAN_CHARACTER' }
+  ): ValidationResult {
+    const gs = state.getState();
+
+    // Must be in PRE_BATTLE phase
+    if (gs.phase !== 'PRE_BATTLE') {
+      return {
+        valid: false,
+        error: { code: 'INVALID_PHASE', message: 'Can only ban characters during pre-battle.' },
+      };
+    }
+
+    // Must be in ban stage
+    if (!gs.preBattle || gs.preBattle.stage !== 'ban') {
+      return {
+        valid: false,
+        error: { code: 'NOT_BAN_STAGE', message: 'Ban stage is not active.' },
+      };
+    }
+
+    // Player must own the character (belongs to their roster)
+    const character = state.getCharacter(playerIndex, action.characterId);
+    if (!character) {
+      return {
+        valid: false,
+        error: { code: 'CHARACTER_NOT_FOUND', message: `Character '${action.characterId}' not found in your roster.` },
+      };
+    }
+
+    // Character must be alive
+    if (!character.isAlive) {
+      return {
+        valid: false,
+        error: { code: 'CHARACTER_DEAD', message: 'Character is already dead or banned.' },
+      };
+    }
+
+    // Must not be the last alive character for that player
+    const aliveCount = state.getAliveCharacters(playerIndex).length;
+    if (aliveCount <= 1) {
+      return {
+        valid: false,
+        error: { code: 'LAST_CHARACTER', message: 'Cannot ban the last alive character.' },
+      };
+    }
+
+    // Player must not have already submitted a ban
+    if (gs.preBattle.pendingBan?.playerIndexes.includes(playerIndex)) {
+      return {
+        valid: false,
+        error: { code: 'ALREADY_BANNED', message: 'You have already submitted a ban.' },
       };
     }
 

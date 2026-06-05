@@ -38,6 +38,7 @@ export interface UseGameReturn {
     ) => void;
     switchForm: (characterId: string, targetForm: string) => void;
     dragonRevive: (targetCharacterId: string) => void;
+    banCharacter: (characterId: string) => void;
     selectCharacter: (id: string | null) => void;
     selectCard: (id: string | null) => void;
     clearError: () => void;
@@ -257,6 +258,13 @@ export function useGame(
           type: 'DRAGON_REVIVE',
           targetCharacterId,
         });
+      },
+      [emitGameAction],
+    ),
+
+    banCharacter: useCallback(
+      (characterId: string) => {
+        emitGameAction({ type: 'BAN_CHARACTER', characterId });
       },
       [emitGameAction],
     ),

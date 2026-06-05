@@ -160,6 +160,10 @@ export class GameEngine {
         result = this.handleRedraw(playerIndex);
         break;
 
+      case 'BAN_CHARACTER':
+        result = this.handleBanCharacter(playerId, action.characterId);
+        break;
+
       default:
         result = {
           success: false,
@@ -691,6 +695,26 @@ export class GameEngine {
     return { success: true };
   }
 
+  private handleBanCharacter(playerId: string, characterId: string): EngineResult {
+    if (!this.preBattleManager || !this.preBattleManager.isBanStageActive()) {
+      return {
+        success: false,
+        error: { code: 'BAN_NOT_ACTIVE', message: 'Ban stage is not active.' },
+      };
+    }
+
+    const result = this.preBattleManager.handleBanAction(playerId, characterId);
+
+    if (!result.success) {
+      return {
+        success: false,
+        error: { code: 'BAN_ERROR', message: result.error || 'Failed to ban character.' },
+      };
+    }
+
+    return { success: true };
+  }
+
   // ─── Decks ───────────────────────────────────────────────────
 
   private dealDecks(): void {
@@ -735,10 +759,30 @@ export class GameEngine {
    * Clean up any running timers (pre-battle countdown, etc.).
    * Called when a game is removed from the registry.
    */
+  /**
+   * Clean up any running timers (pre-battle countdown, etc.).
+   * Called when a game is removed from the registry.
+   */
   destroy(): void {
     if (this.preBattleManager) {
       this.preBattleManager.cleanup();
       this.preBattleManager = null;
+    }
+  }
+
+  /**
+   * Immediately complete the pre-battle phase (for testing).
+   * Stops the countdown timer and transitions to WAITING_FOR_ACTION.
+   */
+  completePreBattle(): void {
+    if (this.preBattleManager) {
+      this.preBattleManager.cleanup();
+      this.preBattleManager = null;
+    }
+    if (this.state.getState().phase === 'PRE_BATTLE') {
+      this.state.setPreBattle(null);
+      this.state.setSecondsRemaining(null);
+      this.turn.startTurn(this.state);
     }
   }
 }

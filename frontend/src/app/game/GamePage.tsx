@@ -98,7 +98,7 @@ export default function GamePage({ roomCode, playerId, playerName, isHost }: Pro
         <DraftPhase state={state} actions={actions} />
       )}
 
-      {/* Pre-Battle Reveal (fighting-game intro) */}
+      {/* Pre-Battle Reveal (fighting-game intro + ban stage) */}
       {state.phase === 'PRE_BATTLE' && (
         <PreBattleReveal
           battlefield={state.battlefield}
@@ -108,6 +108,10 @@ export default function GamePage({ roomCode, playerId, playerName, isHost }: Pro
           stage={state.preBattle?.stage || null}
           playerName={playerName}
           opponentName={opponentName}
+          bannedCharacters={state.gameState?.bannedCharacters || []}
+          pendingBan={state.preBattle?.pendingBan ?? null}
+          playerIndex={state.playerIndex}
+          onBanCharacter={(characterId) => actions.banCharacter(characterId)}
         />
       )}
 
