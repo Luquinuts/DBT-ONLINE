@@ -173,6 +173,12 @@ function handleStartGame(
   // ── Create game engine ─────────────────────────────────────
   const engine = gameRegistry.createGame(roomCode, room.id, player1Id, player2Id);
 
+  // ── Set broadcast callback for async state pushes ──────────
+  // (pre-battle countdown, etc.)
+  engine.setBroadcastCallback((state) => {
+    io.to(room.id).emit('game:state_update', state);
+  });
+
   // ── Update room status ─────────────────────────────────────
   room.status = 'playing';
   room.updatedAt = new Date().toISOString();
@@ -267,6 +273,7 @@ function handleGameAction(
   // ── Game over ──────────────────────────────────────────────
   if (result.gameOver) {
     io.to(roomId).emit('game:over', state);
+    engine.destroy();
     gameRegistry.removeGame(data.roomCode);
     console.log(`[game:over] ${data.roomCode} — winner: ${state.winner}`);
   }
@@ -320,6 +327,7 @@ function handleDefenderResponse(
   // ── Game over after defense resolves ───────────────────────
   if (result.gameOver) {
     io.to(roomId).emit('game:over', state);
+    engine.destroy();
     gameRegistry.removeGame(data.roomCode);
     console.log(`[game:over] ${data.roomCode} — winner: ${state.winner}`);
   }
@@ -400,6 +408,8 @@ export function handleGameDisconnect(
     const finalState = e.getState();
     finalState.winner = opponentPlayerId;
     finalState.phase = 'GAME_OVER';
+
+    e.destroy(); // clean up pre-battle timers, etc.
 
     io.to(rid).emit('game:over', finalState);
     io.to(rid).emit('room:event', {

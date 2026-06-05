@@ -7,6 +7,7 @@ import type {
   BattlefieldDef,
   GameError,
   PendingAttack,
+  PreBattleState,
 } from '@dbt-online/shared';
 
 export interface GameUIState {
@@ -46,6 +47,10 @@ export interface GameUIState {
   draftPicks: [string[], string[]];
   draftPhase: 'PICKING' | 'PLACING' | 'DONE' | null;
   currentPicker: number | null;
+
+  // Pre-battle
+  secondsRemaining: number | null;
+  preBattle: PreBattleState | null;
 
 }
 
@@ -98,6 +103,9 @@ export function createInitialGameUIState(): GameUIState {
     draftPicks: [[], []],
     draftPhase: null,
     currentPicker: null,
+
+    secondsRemaining: null,
+    preBattle: null,
 
   };
 }
@@ -162,6 +170,8 @@ export function gameReducer(
         draftPicks,
         draftPhase,
         currentPicker,
+        secondsRemaining: gameState.secondsRemaining,
+        preBattle: gameState.preBattle,
       };
     }
 

@@ -204,10 +204,10 @@ export class DraftManager {
     if (placedMask === 3) {
       // Both placed (bits 0 and 1 set)
       draft.phase = 'DONE';
-      state.transitionTo('BATTLEFIELD');
+      state.transitionTo('PRE_BATTLE');
       state.addLog(
         'PLACING_COMPLETE',
-        'Both players have placed their characters. Starting game.'
+        'Both players have placed their characters. Entering pre-battle reveal.'
       );
       return { success: true, readyToStart: true };
     }

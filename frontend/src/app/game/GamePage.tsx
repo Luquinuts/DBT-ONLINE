@@ -6,6 +6,7 @@ import { useGame } from '@/lib/useGame';
 import { DraftPhase } from '@/components/game/draft/DraftPhase';
 import { GameBoard } from '@/components/game/GameBoard';
 import { GameOverOverlay } from '@/components/game/GameOverOverlay';
+import { PreBattleReveal } from '@/components/game/PreBattleReveal';
 import { DefenderResponseModal } from '@/components/game/DefenderResponseModal';
 import { ErrorToast } from '@/components/game/ErrorToast';
 import { getSocket } from '@/lib/socket';
@@ -19,7 +20,7 @@ interface Props {
 }
 
 function isPlayingPhase(phase: string | null): boolean {
-  return !!phase && phase !== 'DRAFT' && phase !== 'GAME_OVER';
+  return !!phase && phase !== 'DRAFT' && phase !== 'GAME_OVER' && phase !== 'PRE_BATTLE';
 }
 
 export default function GamePage({ roomCode, playerId, playerName, isHost }: Props) {
@@ -97,7 +98,20 @@ export default function GamePage({ roomCode, playerId, playerName, isHost }: Pro
         <DraftPhase state={state} actions={actions} />
       )}
 
-      {/* Game Board (all play phases except DRAFT and GAME_OVER) */}
+      {/* Pre-Battle Reveal (fighting-game intro) */}
+      {state.phase === 'PRE_BATTLE' && (
+        <PreBattleReveal
+          battlefield={state.battlefield}
+          playerCharacters={state.currentPlayer?.characters || []}
+          opponentCharacters={state.opponent?.characters || []}
+          secondsRemaining={state.secondsRemaining}
+          stage={state.preBattle?.stage || null}
+          playerName={playerName}
+          opponentName={opponentName}
+        />
+      )}
+
+      {/* Game Board (all play phases except DRAFT, PRE_BATTLE, and GAME_OVER) */}
       {isPlayingPhase(state.phase) && (
         <>
           <GameBoard

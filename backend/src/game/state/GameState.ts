@@ -7,6 +7,7 @@ import type {
   CharacterState,
   DraftState,
   PendingAttack,
+  PreBattleState,
   TurnLogEntry,
 } from '@dbt-online/shared';
 import { createInitialPlayerState, createEmptyDraftState } from '@dbt-online/shared';
@@ -78,6 +79,8 @@ export class GameStateManager {
       pendingAttack: null,
       rageActive: false,
       turnLog: [],
+      secondsRemaining: null,
+      preBattle: null,
     };
   }
 
@@ -179,6 +182,14 @@ export class GameStateManager {
 
   isRageActive(): boolean {
     return this.state.rageActive;
+  }
+
+  setSecondsRemaining(seconds: number | null): void {
+    this.state.secondsRemaining = seconds;
+  }
+
+  setPreBattle(preBattle: PreBattleState | null): void {
+    this.state.preBattle = preBattle;
   }
 
   /**

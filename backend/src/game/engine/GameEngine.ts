@@ -16,6 +16,7 @@ import { EventBus, registerPassives } from '../hooks/EventBus';
 import { ActionValidator } from '../validation/ActionValidator';
 import type { ValidationResult } from '../validation/ActionValidator';
 import { getRandomBattlefield } from '../../data';
+import { PreBattleManager } from '../pre-battle/PreBattleManager';
 
 export interface EngineResult {
   success: boolean;
@@ -50,6 +51,8 @@ export class GameEngine {
   private field: FieldEffectEngine;
   private winCheck: WinConditionChecker;
   private events: EventBus;
+  private preBattleManager: PreBattleManager | null = null;
+  private broadcastFn: ((state: GameState) => void) | null = null;
 
   constructor(roomCode: string, player1Id: string, player2Id: string) {
     // ── Create the event bus and register passives ──────────
@@ -67,6 +70,15 @@ export class GameEngine {
 
     // ── Create game state with all character IDs available ──
     this.state = new GameStateManager(roomCode, player1Id, player2Id, ALL_CHARACTER_IDS);
+  }
+
+  /**
+   * Set an external broadcast callback for pushing state updates
+   * outside the normal handleAction flow (e.g., pre-battle countdown ticks).
+   * Called by the socket handler when the game engine is created.
+   */
+  setBroadcastCallback(fn: (state: GameState) => void): void {
+    this.broadcastFn = fn;
   }
 
   /**
@@ -156,13 +168,14 @@ export class GameEngine {
     }
 
     // ── Check win condition after every action ──────────
-    // Skip during setup phases (DRAFT, BATTLEFIELD) because
-    // characters haven't been placed on the field yet.
+    // Skip during setup phases (DRAFT, BATTLEFIELD, PRE_BATTLE) because
+    // characters haven't been placed on the field yet or reveal is playing.
     const currentPhase = this.state.getPhase();
     if (
       result.success &&
       !result.gameOver &&
-      currentPhase !== 'DRAFT'
+      currentPhase !== 'DRAFT' &&
+      currentPhase !== 'PRE_BATTLE'
     ) {
       const winResult = this.winCheck.check(this.state);
       if (winResult.gameOver) {
@@ -213,7 +226,7 @@ export class GameEngine {
 
     if (placeResult.readyToStart) {
       // Both players placed — pick a battlefield, apply its effects,
-      // deal decks and start first turn
+      // deal decks, then start the pre-battle reveal + countdown
       const battlefield = getRandomBattlefield();
       this.state.setBattlefield(battlefield);
       this.field.applyModifiers(this.state, battlefield);
@@ -222,7 +235,32 @@ export class GameEngine {
         `Battlefield '${battlefield.name}' selected: ${battlefield.description}`
       );
       this.dealDecks();
-      this.turn.startTurn(this.state);
+
+      // ── Start pre-battle countdown ──────────────────────
+      // The PRE_BATTLE phase was set by DraftManager.transitionTo('PRE_BATTLE')
+      this.preBattleManager = new PreBattleManager();
+
+      const broadcast = this.broadcastFn;
+      this.preBattleManager.startCountdown(
+        this.state,
+        (state) => {
+          // Broadcast each tick via the external callback
+          if (broadcast) {
+            broadcast(state);
+          }
+        },
+        () => {
+          // Countdown complete — start the actual turn
+          this.preBattleManager = null;
+          this.state.setPreBattle(null);
+          this.state.setSecondsRemaining(null);
+          this.turn.startTurn(this.state);
+          // Broadcast the post-pre-battle state (WAITING_FOR_ACTION)
+          if (broadcast) {
+            broadcast(this.state.toJSON());
+          }
+        },
+      );
     }
 
     return { success: true };
@@ -691,5 +729,16 @@ export class GameEngine {
 
   getRoomCode(): string {
     return this.state.getState().roomCode;
+  }
+
+  /**
+   * Clean up any running timers (pre-battle countdown, etc.).
+   * Called when a game is removed from the registry.
+   */
+  destroy(): void {
+    if (this.preBattleManager) {
+      this.preBattleManager.cleanup();
+      this.preBattleManager = null;
+    }
   }
 }

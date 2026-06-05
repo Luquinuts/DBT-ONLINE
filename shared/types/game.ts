@@ -80,6 +80,7 @@ export interface BattlefieldDef {
 export type GamePhase =
   | 'DRAFT'
   | 'BATTLEFIELD'
+  | 'PRE_BATTLE'
   | 'WAITING_FOR_ACTION'
   | 'ADVANCE'
   | 'ATTACK'
@@ -126,6 +127,12 @@ export interface PlayerGameState {
   turnActionsRemaining: number;
 }
 
+// ─── Pre-battle state ───────────────────────────────────────────
+
+export interface PreBattleState {
+  stage: 'reveal' | 'countdown' | 'fight';
+}
+
 // ─── Full game state ────────────────────────────────────────────
 
 export interface GameState {
@@ -141,6 +148,8 @@ export interface GameState {
   pendingAttack: PendingAttack | null;  // for defender response window
   rageActive: boolean;
   turnLog: TurnLogEntry[];
+  secondsRemaining: number | null;
+  preBattle: PreBattleState | null;
 }
 
 export interface DraftState {

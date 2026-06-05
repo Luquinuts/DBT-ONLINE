@@ -36,6 +36,7 @@ export function createEmptyDraftState(): DraftState {
 /**
  * Returns which game phases allow a given action type.
  * Based on the phase validation matrix from design.md.
+ * PRE_BATTLE allows no actions — it's a reveal-only phase.
  */
 export function validPhasesForAction(actionType: GameAction['type']): GamePhase[] {
   switch (actionType) {
