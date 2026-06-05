@@ -1,6 +1,11 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import type { Mock } from 'vitest';
+import type { GameState } from '@dbt-online/shared';
 import { PreBattleManager } from './PreBattleManager';
 import { GameStateManager, createCharacterState } from '../state/GameState';
+
+type TickCallback = (state: GameState) => void;
+type CompleteCallback = () => void;
 
 const ALL_CHARS = [
   'ssj-god-goku', 'ssj-blue-vegeta', 'golden-frieza', 'ssj-rose-black-goku',
@@ -11,15 +16,15 @@ const ALL_CHARS = [
 describe('PreBattleManager', () => {
   let manager: PreBattleManager;
   let state: GameStateManager;
-  let tickCallback: ReturnType<typeof vi.fn>;
-  let completeCallback: ReturnType<typeof vi.fn>;
+  let tickCallback: Mock<TickCallback>;
+  let completeCallback: Mock<CompleteCallback>;
 
   beforeEach(() => {
     manager = new PreBattleManager();
     state = new GameStateManager('TEST', 'p1', 'p2', ALL_CHARS);
     state.getState().phase = 'PRE_BATTLE';
-    tickCallback = vi.fn();
-    completeCallback = vi.fn();
+    tickCallback = vi.fn<TickCallback>();
+    completeCallback = vi.fn<CompleteCallback>();
   });
 
   afterEach(() => {
@@ -170,15 +175,15 @@ describe('PreBattleManager', () => {
   describe('ban stage', () => {
     let banManager: PreBattleManager;
     let banState: GameStateManager;
-    let banTick: ReturnType<typeof vi.fn>;
-    let banComplete: ReturnType<typeof vi.fn>;
+    let banTick: Mock<TickCallback>;
+    let banComplete: Mock<CompleteCallback>;
 
     beforeEach(() => {
       banManager = new PreBattleManager(0);
       banState = new GameStateManager('TEST', 'p1', 'p2', ALL_CHARS);
       banState.getState().phase = 'PRE_BATTLE';
-      banTick = vi.fn();
-      banComplete = vi.fn();
+      banTick = vi.fn<TickCallback>();
+      banComplete = vi.fn<CompleteCallback>();
 
       // Populate characters for both players (3 each)
       const defs0 = ['ssj-broly', 'ssj-blue-vegeta', 'ssj2-gohan'].map(

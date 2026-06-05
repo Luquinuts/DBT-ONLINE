@@ -18,8 +18,9 @@ import type { GameStateManager } from '../state/GameState';
 export class PreBattleManager {
   private timer: NodeJS.Timeout | null = null;
   private stateManager: GameStateManager | null = null;
-  private onTick: ((state: GameState) => void) | null = null;
-  private onComplete: (() => void) | null = null;
+  // Accept a callable with any signature so test mocks (vi.fn) are assignable
+  private onTick: ((...args: any[]) => any) | null = null;
+  private onComplete: ((...args: any[]) => any) | null = null;
   private fightDelayMs: number;
   private tickIntervalMs: number;
   private banActive: boolean = false;
@@ -45,8 +46,8 @@ export class PreBattleManager {
    */
   startCountdown(
     gameState: GameStateManager,
-    onTick: (state: GameState) => void,
-    onComplete: () => void,
+    onTick: (...args: any[]) => any,
+    onComplete: (...args: any[]) => any,
   ): void {
     this.stateManager = gameState;
     this.onTick = onTick;
@@ -75,7 +76,7 @@ export class PreBattleManager {
    */
   private startBanStage(
     gameState: GameStateManager,
-    onTick: (state: GameState) => void,
+    onTick: (...args: any[]) => any,
   ): void {
     this.banActive = true;
     gameState.setPreBattle({
@@ -166,8 +167,8 @@ export class PreBattleManager {
 
   private scheduleNextTick(
     gameState: GameStateManager,
-    onTick: (state: GameState) => void,
-    onComplete: () => void,
+    onTick: (...args: any[]) => any,
+    onComplete: (...args: any[]) => any,
   ): void {
     if (this.timer !== null) return; // Already stopped
 
