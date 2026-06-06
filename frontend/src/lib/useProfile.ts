@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from './supabase';
+import { getSupabase } from './supabase';
 import { useAuth } from './auth';
 
 interface Profile {
@@ -22,7 +22,7 @@ export function useProfile() {
       return;
     }
 
-    supabase
+    getSupabase()
       .from('profiles')
       .select('id, email, username')
       .eq('id', user.id)
@@ -39,7 +39,7 @@ export function useProfile() {
 
   const updateUsername = async (username: string) => {
     if (!user) return;
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('profiles')
       .update({ username })
       .eq('id', user.id);

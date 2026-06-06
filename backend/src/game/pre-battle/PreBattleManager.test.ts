@@ -252,21 +252,21 @@ describe('PreBattleManager', () => {
       expect(banManager.isBanStageActive()).toBe(false);
     });
 
-    it('handleBanAction bans character and marks player as submitted', () => {
+    it('handleBanAction bans opponent character and marks player as submitted', () => {
       vi.useFakeTimers();
       banManager.startCountdown(banState, banTick, banComplete);
 
-      // P0 bans one of their own characters
-      const result = banManager.handleBanAction('p1', 'ssj-broly');
+      // P0 bans one of the opponent's characters
+      const result = banManager.handleBanAction('p1', 'ssj3-gotenks');
       expect(result).toEqual({ success: true });
 
       const state = banState.getState();
-      // Character should be dead
-      const broly = banState.getCharacter(0, 'ssj-broly');
-      expect(broly?.isAlive).toBe(false);
+      // Opponent's character should be dead
+      const gotenks = banState.getCharacter(1, 'ssj3-gotenks');
+      expect(gotenks?.isAlive).toBe(false);
 
       // BannedCharacters should contain the ID
-      expect(state.bannedCharacters).toContain('ssj-broly');
+      expect(state.bannedCharacters).toContain('ssj3-gotenks');
 
       // pendingBan should include P0
       expect(state.preBattle?.pendingBan?.playerIndexes).toEqual([0]);
@@ -276,8 +276,8 @@ describe('PreBattleManager', () => {
       vi.useFakeTimers();
       banManager.startCountdown(banState, banTick, banComplete);
 
-      banManager.handleBanAction('p1', 'ssj-broly');
-      const result = banManager.handleBanAction('p1', 'ssj-blue-vegeta');
+      banManager.handleBanAction('p1', 'ssj3-gotenks');
+      const result = banManager.handleBanAction('p1', 'golden-frieza');
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('You have already submitted a ban.');
@@ -289,31 +289,31 @@ describe('PreBattleManager', () => {
 
       const result = banManager.handleBanAction('p1', 'beerus');
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Character not found in your roster.');
+      expect(result.error).toBe('Character not found in opponent roster.');
     });
 
     it('rejects ban for an already dead character', () => {
       vi.useFakeTimers();
       banManager.startCountdown(banState, banTick, banComplete);
 
-      // Kill the character first
-      const char = banState.getCharacter(0, 'ssj-broly')!;
+      // Kill the opponent's character first
+      const char = banState.getCharacter(1, 'ssj3-gotenks')!;
       char.isAlive = false;
 
-      const result = banManager.handleBanAction('p1', 'ssj-broly');
+      const result = banManager.handleBanAction('p1', 'ssj3-gotenks');
       expect(result.success).toBe(false);
       expect(result.error).toBe('Character is already dead or banned.');
     });
 
-    it('rejects banning the last alive character', () => {
+    it('rejects banning the last alive opponent character', () => {
       vi.useFakeTimers();
       banManager.startCountdown(banState, banTick, banComplete);
 
-      // Kill 2 of P0's characters so only 1 remains alive
-      banState.getCharacter(0, 'ssj-broly')!.isAlive = false;
-      banState.getCharacter(0, 'ssj-blue-vegeta')!.isAlive = false;
+      // Kill 2 of P1's characters so only 1 remains alive
+      banState.getCharacter(1, 'ssj3-gotenks')!.isAlive = false;
+      banState.getCharacter(1, 'golden-frieza')!.isAlive = false;
 
-      const result = banManager.handleBanAction('p1', 'ssj2-gohan');
+      const result = banManager.handleBanAction('p1', 'perfect-cell');
       expect(result.success).toBe(false);
       expect(result.error).toBe('Cannot ban the last alive character.');
     });
@@ -334,17 +334,17 @@ describe('PreBattleManager', () => {
       banManager.startCountdown(banState, banTick, banComplete);
       banTick.mockClear(); // Clear initial ban tick
 
-      // P0 bans
-      banManager.handleBanAction('p1', 'ssj-broly');
+      // P0 bans P1's character
+      banManager.handleBanAction('p1', 'ssj3-gotenks');
       expect(banTick).toHaveBeenCalledTimes(1);
       const afterP0 = banTick.mock.calls[0][0];
-      expect(afterP0.bannedCharacters).toContain('ssj-broly');
+      expect(afterP0.bannedCharacters).toContain('ssj3-gotenks');
       expect(afterP0.preBattle?.pendingBan?.playerIndexes).toEqual([0]);
 
       banTick.mockClear();
 
-      // P1 bans
-      banManager.handleBanAction('p2', 'ssj3-gotenks');
+      // P1 bans P0's character
+      banManager.handleBanAction('p2', 'ssj-broly');
 
       // After both bans: handleBanAction emits:
       //  (1) after P1's ban is applied (stage=ban, pendingBan=[0,1])

@@ -82,6 +82,8 @@ export class GameStateManager {
       secondsRemaining: null,
       preBattle: null,
       bannedCharacters: [],
+      namekReviveUsed: false,
+      namekRevivePending: null,
     };
   }
 
@@ -191,6 +193,24 @@ export class GameStateManager {
 
   setPreBattle(preBattle: PreBattleState | null): void {
     this.state.preBattle = preBattle;
+  }
+
+  // ─── Namek Revive ─────────────────────────────────────────
+
+  isNamekRevivePending(playerIndex: number): boolean {
+    return this.state.namekRevivePending === playerIndex;
+  }
+
+  setNamekRevivePending(index: number | null): void {
+    this.state.namekRevivePending = index;
+  }
+
+  setNamekReviveUsed(used: boolean): void {
+    this.state.namekReviveUsed = used;
+  }
+
+  isNamekReviveUsed(): boolean {
+    return this.state.namekReviveUsed;
   }
 
   /**

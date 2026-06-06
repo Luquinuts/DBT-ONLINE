@@ -120,17 +120,18 @@ export class PreBattleManager {
       return { success: false, error: 'You have already submitted a ban.' };
     }
 
-    // Validate character belongs to this player and is alive
-    const character = this.stateManager.getCharacter(playerIndex, characterId);
+    // Validate character belongs to the OPPONENT (you ban rival's characters, not your own)
+    const opponentIndex = playerIndex === 0 ? 1 : 0;
+    const character = this.stateManager.getCharacter(opponentIndex, characterId);
     if (!character) {
-      return { success: false, error: 'Character not found in your roster.' };
+      return { success: false, error: 'Character not found in opponent roster.' };
     }
     if (!character.isAlive) {
       return { success: false, error: 'Character is already dead or banned.' };
     }
 
-    // Validate it's not the last alive character for that player
-    const aliveCount = this.stateManager.getAliveCharacters(playerIndex).length;
+    // Validate it's not the last alive character for the opponent
+    const aliveCount = this.stateManager.getAliveCharacters(opponentIndex).length;
     if (aliveCount <= 1) {
       return { success: false, error: 'Cannot ban the last alive character.' };
     }

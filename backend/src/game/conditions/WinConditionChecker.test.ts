@@ -105,4 +105,55 @@ describe('WinConditionChecker', () => {
       expect(result.winner).toBeNull();
     });
   });
+
+  describe('Namek revive guard', () => {
+    beforeEach(() => {
+      state.getState().battlefield = {
+        id: 'namek',
+        name: 'Namek',
+        effect: 'revive_on_last:1',
+        description: 'Namek battlefield',
+      };
+    });
+
+    it('check() does NOT end game when player has 0 alive but namekRevivePending is set', () => {
+      state.getPlayer(0).characters[0].isAlive = false;
+      state.getState().namekRevivePending = 0;
+      const result = checker.check(state);
+      expect(result.gameOver).toBe(false);
+      expect(result.winner).toBeNull();
+    });
+
+    it('check() DOES end game when player has 0 alive and no pending revive', () => {
+      state.getPlayer(0).characters[0].isAlive = false;
+      state.getState().namekRevivePending = null;
+      const result = checker.check(state);
+      expect(result.gameOver).toBe(true);
+      expect(result.winner).toBe('p2');
+    });
+
+    it('checkAfterDeath() does NOT end game when dead player has pending revive', () => {
+      state.getPlayer(0).characters[0].isAlive = false;
+      state.getState().namekRevivePending = 0;
+      const result = checker.checkAfterDeath(state, 0);
+      expect(result.gameOver).toBe(false);
+      expect(result.winner).toBeNull();
+    });
+
+    it('checkAfterDeath() DOES end game when dead player has no pending revive', () => {
+      state.getPlayer(0).characters[0].isAlive = false;
+      state.getState().namekRevivePending = null;
+      const result = checker.checkAfterDeath(state, 0);
+      expect(result.gameOver).toBe(true);
+      expect(result.winner).toBe('p2');
+    });
+
+    it('check() does NOT end game when opponent has 0 alive but revive pending for them', () => {
+      state.getPlayer(1).characters[0].isAlive = false;
+      state.getState().namekRevivePending = 1;
+      const result = checker.check(state);
+      expect(result.gameOver).toBe(false);
+      expect(result.winner).toBeNull();
+    });
+  });
 });
