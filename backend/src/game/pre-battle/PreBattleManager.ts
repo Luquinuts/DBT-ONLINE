@@ -189,9 +189,10 @@ export class PreBattleManager {
         // ── Brief pause so the client can show FIGHT! ───────
         this.timer = setTimeout(() => {
           this.timer = null;
+          const onComplete = this.onComplete;
           this.cleanup();
-          if (this.onComplete) {
-            this.onComplete();
+          if (onComplete) {
+            onComplete();
           }
         }, this.fightDelayMs);
         return;
