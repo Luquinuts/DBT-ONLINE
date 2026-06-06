@@ -39,18 +39,14 @@ export function getCharacterImageSrc(characterId: string): string {
 
 // ─── Character icon images ────────────────────────────────────────
 
+/**
+ * Character IDs match the icon filenames directly.
+ * Drop a {character-id}.png in /public/images/icons/characters/ and it works.
+ */
 const characterIconFixes: Record<string, string> = {
-  'ssj-god-goku': 'ssjgod-goku',
-  'ssj-blue-vegeta': 'ssjblue-vegeta',
   'ssj-rose-black-goku': 'black-goku',
 };
 
-/**
- * Some icon filenames differ from the character ID:
- *   ssj-god-goku    → ssjgod-goku.png
- *   ssj-blue-vegeta → ssjblue-vegeta.png
- *   ssj-rose-black-goku → black-goku.png
- */
 export function getCharacterIconSrc(characterId: string): string {
   return `/images/icons/characters/${characterIconFixes[characterId] || characterId}.png`;
 }
