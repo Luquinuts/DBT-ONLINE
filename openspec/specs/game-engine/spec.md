@@ -14,7 +14,7 @@ Server-authoritative game engine managing draft, turn lifecycle, combat, card ef
 | GE-4 | Combat MUST resolve damage: subtract ataque from target vida, apply shield (block any hit), esquive (block normal attacks only), and passives (counter-damage, double attack) | MUST |
 | GE-5 | Each card effect MUST resolve correctly: Rage (permanent +1 atk to all allies with rage icon), Nube Kinton (skip lentitud, 1/game per character), ULTIMATE (all characters skip lentitud, 2/game), Báculo Sagrado (1 damage, breaks shield, turn continues), Esquive (normal attacks only), Escudo (blocks any attack) | MUST |
 | GE-6 | Ki MUST accumulate from played cards and be consumed for definitivas and abilities that declare a cost | MUST |
-| GE-7 | Win condition MUST trigger when a player has 0 characters alive and none can be revived | MUST |
+| GE-7 | Win condition MUST trigger when a player has 0 characters alive and none can be revived. If `namekRevivePending` is set for the player with 0 alive characters, the game MUST NOT end and MUST wait for the revive action | MUST |
 | GE-8 | Game MUST end immediately if BEERUS uses definitiva (10 ki) — infinite damage to single target | MUST |
 
 ### Scenario: GE-1 — Out-of-turn draft pick
@@ -57,11 +57,18 @@ Server-authoritative game engine managing draft, turn lifecycle, combat, card ef
 - WHEN player attempts to use it again on same character
 - THEN engine rejects with "Nube Kinton already used this game"
 
-### Scenario: GE-7 — Win condition
+### Scenario: GE-7 — Standard game over (unchanged)
 
 - GIVEN opponent's last character reaches 0 vida
-- WHEN state updates
+- WHEN no revive is pending
 - THEN phase = GAME_OVER, winnerId = current player
+
+### Scenario: GE-7 — Revive pending prevents game over
+
+- GIVEN `namekRevivePending` = 0, Player 0 has 0 alive characters, 1 dead character
+- WHEN combat resolves and win check runs
+- THEN phase MUST NOT transition to GAME_OVER
+- AND game continues in WAITING_FOR_ACTION for Player 0 to revive
 
 ## Requirements (Added by pre-battle-reveal)
 
@@ -111,3 +118,58 @@ Server-authoritative game engine managing draft, turn lifecycle, combat, card ef
 - WHEN engine enters `PRE_BATTLE`
 - THEN countdown starts immediately (no ban sub-phase)
 - AND `BAN_CHARACTER` actions are rejected with error
+
+## Requirements (Added by namek-revive)
+
+| ID | Requirement | Strength |
+|----|-------------|----------|
+| GE-12 | After combat resolves and before win condition check, the engine MUST detect when battlefield effect = `revive_on_last`, Kid Buu is not alive on either field, `namekReviveUsed` = false, and any player has exactly 1 alive character with at least 1 dead character. On detection, set `namekRevivePending` to that player's index and skip win check | MUST |
+| GE-13 | When `namekRevivePending` is set, the action validator MUST accept `DRAGON_REVIVE` action without requiring Esfera del Dragón in the player's hand | MUST |
+| GE-14 | When `handleDragonRevive` is called while `namekRevivePending` is set, the engine MUST invoke `EsferaDragonEffect` directly on the target dead character without searching for the card | MUST |
+| GE-15 | After a successful Namek revive, the engine MUST set `namekReviveUsed = true`, clear `namekRevivePending = null`, then run win condition check | MUST |
+
+### Scenario: GE-12 — Happy path detection
+
+- GIVEN battlefield effect = `revive_on_last`, Kid Buu not in play, `namekReviveUsed` = false
+- WHEN Player A drops to exactly 1 alive character with at least 1 dead character
+- THEN engine sets `namekRevivePending` = Player A's index
+- AND phase stays WAITING_FOR_ACTION, game does not end
+
+### Scenario: GE-12 — Kid Buu blocks detection
+
+- GIVEN battlefield effect = `revive_on_last`, Kid Buu alive on either field
+- WHEN a player drops to 1 alive character
+- THEN engine MUST NOT set `namekRevivePending`
+- AND win condition check runs normally
+
+### Scenario: GE-12 — Only triggers once
+
+- GIVEN `namekReviveUsed` = true
+- WHEN a player drops to 1 alive character with dead characters
+- THEN engine MUST NOT trigger revive detection
+
+### Scenario: GE-13 — Cardless DRAGON_REVIVE accepted
+
+- GIVEN `namekRevivePending` = 0
+- WHEN Player 0 sends `DRAGON_REVIVE`
+- THEN validator accepts even without Esfera del Dragón in hand
+
+### Scenario: GE-13 — DRAGON_REVIVE rejected when not pending
+
+- GIVEN `namekRevivePending` = null
+- WHEN any player sends `DRAGON_REVIVE`
+- THEN validator rejects unless Esfera del Dragón is in hand
+
+### Scenario: GE-14 — Revive execution
+
+- GIVEN `namekRevivePending` = 0, Player 0 has dead character "gohan"
+- WHEN Player 0 sends `DRAGON_REVIVE` with `{ targetCharacterId: "gohan" }`
+- THEN engine calls `EsferaDragonEffect` on "gohan"
+- AND Gohan is revived and placed on the field
+
+### Scenario: GE-15 — Post-revive state
+
+- GIVEN a successful Namek revive just completed
+- WHEN `EsferaDragonEffect` returns success
+- THEN `namekReviveUsed` = true, `namekRevivePending` = null
+- AND win condition check runs; player now has 1+ alive so game continues
