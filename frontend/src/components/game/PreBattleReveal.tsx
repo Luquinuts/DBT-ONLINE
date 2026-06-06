@@ -58,10 +58,10 @@ export function PreBattleReveal({
     playerIndex != null &&
     pendingBan.playerIndexes.includes(playerIndex);
 
-  // If the opponent has submitted a ban, find which of their characters was banned
+  // If the opponent has submitted a ban, find which of the PLAYER's characters was banned
   const opponentBannedCharId =
     showBanStage && bannedCharacters
-      ? opponentCharacters.find((c) => bannedCharacters.includes(c.characterId))
+      ? playerCharacters.find((c) => bannedCharacters.includes(c.characterId))
       : undefined;
 
   return (
@@ -102,13 +102,13 @@ export function PreBattleReveal({
               )}
             </div>
 
-            {/* Selectable character cards */}
+            {/* Selectable opponent character cards — ban one of the rival's chars */}
             <div className="flex flex-wrap justify-center gap-3">
-              {playerCharacters.map((char) => {
+              {opponentCharacters.map((char) => {
                 const display = CHARACTER_DISPLAY[char.characterId];
                 const isBanned = !char.isAlive;
                 const isLastAlive =
-                  playerCharacters.filter((c) => c.isAlive).length <= 1 && char.isAlive;
+                  opponentCharacters.filter((c) => c.isAlive).length <= 1 && char.isAlive;
                 const canSelect =
                   !hasSubmittedBan && !isBanned && !isLastAlive;
 
