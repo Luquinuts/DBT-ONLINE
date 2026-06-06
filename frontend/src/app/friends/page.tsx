@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import SidebarLayout from '@/components/SidebarLayout';
-import { supabase } from '@/lib/supabase';
+import { getSupabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth';
 import { connect } from '@/lib/socket';
 import type { UserPresence } from '@dbt-online/shared';
@@ -65,7 +65,7 @@ export default function FriendsPage() {
   // ─── REST: amigos y solicitudes ────────────────────────────────
 
   async function getToken(): Promise<string | null> {
-    const { data } = await supabase.auth.getSession();
+    const { data } = await getSupabase().auth.getSession();
     return data.session?.access_token ?? null;
   }
 

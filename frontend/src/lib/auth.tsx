@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
-import { supabase } from './supabase';
+import { getSupabase } from './supabase';
 import { setAuthToken } from './socket';
 
 interface AuthContextType {
@@ -30,6 +30,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Recuperar sesión al montar
   useEffect(() => {
+    const supabase = getSupabase();
+
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       setSession(s);
       setUser(s?.user ?? null);
@@ -52,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(
     async (email: string, password: string): Promise<string | null> => {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error } = await getSupabase().auth.signInWithPassword({
         email,
         password,
       });
@@ -63,14 +65,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = useCallback(
     async (email: string, password: string): Promise<string | null> => {
-      const { error } = await supabase.auth.signUp({ email, password });
+      const { error } = await getSupabase().auth.signUp({ email, password });
       return error?.message ?? null;
     },
     []
   );
 
   const logout = useCallback(async () => {
-    await supabase.auth.signOut();
+    await getSupabase().auth.signOut();
   }, []);
 
   return (
