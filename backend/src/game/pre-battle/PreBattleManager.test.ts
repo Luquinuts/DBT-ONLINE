@@ -72,6 +72,23 @@ describe('PreBattleManager', () => {
     expect(tickCallback.mock.calls[5][0].preBattle?.stage).toBe('fight');
   });
 
+  it('calls onComplete after countdown reaches 0 + fight delay', () => {
+    const quickManager = new PreBattleManager(0);
+    vi.useFakeTimers();
+    quickManager.startCountdown(state, tickCallback, completeCallback);
+
+    // Advance through 5 countdown ticks (5000ms) + fight delay (0ms)
+    for (let i = 0; i < 5; i++) {
+      vi.advanceTimersByTime(1000);
+    }
+
+    // At this point remaining=0 was emitted as FIGHT! and the fightDelay
+    // timeout was set (0ms). Advance one microtask to trigger it.
+    vi.advanceTimersByTime(1);
+
+    expect(completeCallback).toHaveBeenCalledTimes(1);
+  });
+
   it('stopCountdown + manual cleanup does not call onComplete', () => {
     const spyManager = new PreBattleManager(0);
     vi.useFakeTimers();
