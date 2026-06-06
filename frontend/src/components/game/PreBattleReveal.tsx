@@ -141,57 +141,51 @@ export function PreBattleReveal({
         ) : (
           /* ─── REVEAL / COUNTDOWN / FIGHT ────────────────────── */
           <>
-            {/* Left: opponent characters */}
-            <div className="flex flex-col gap-3">
-              {opponentCharacters.map((char) => (
-                <CharacterPortrait
-                  key={char.characterId}
-                  characterId={char.characterId}
-                  side="left"
-                />
-              ))}
-            </div>
+            {/* Left: player (host) characters */}
+            <div className="flex flex-row items-center justify-center gap-4 sm:gap-6">
+              <CharacterRoster
+                characters={playerCharacters}
+                label={playerName}
+                side="left"
+              />
 
-            {/* Center: battlefield card + effect */}
-            <div className="flex flex-col items-center gap-4">
-              <div className="relative aspect-[3/4] w-64 sm:w-72">
-                <HoloCard className="h-full w-full rounded-2xl shadow-2xl shadow-yellow-900/30">
-                  <GameImage
-                    src={battlefield ? getBattlefieldImageSrc(battlefield.id) : ''}
-                    alt={battlefield?.name ?? 'Battlefield'}
-                    className="h-full w-full rounded-2xl object-cover"
-                    fallback={
-                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-yellow-950/60 to-amber-900/40 rounded-2xl">
-                        <span className="text-6xl">{battlefield?.icon || '🗺️'}</span>
-                      </div>
-                    }
-                  />
-                </HoloCard>
+              {/* Center: battlefield card + effect */}
+              <div className="flex flex-col items-center gap-3">
+                <div className="relative aspect-[3/4] w-48 sm:w-56">
+                  <HoloCard className="h-full w-full rounded-2xl shadow-2xl shadow-yellow-900/30">
+                    <GameImage
+                      src={battlefield ? getBattlefieldImageSrc(battlefield.id) : ''}
+                      alt={battlefield?.name ?? 'Battlefield'}
+                      className="h-full w-full rounded-2xl object-cover"
+                      fallback={
+                        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-yellow-950/60 to-amber-900/40 rounded-2xl">
+                          <span className="text-6xl">{battlefield?.icon || '🗺️'}</span>
+                        </div>
+                      }
+                    />
+                  </HoloCard>
 
-                {/* VS badge */}
-                <div className="absolute -left-4 -right-4 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
-                  <span className="rounded-full bg-gradient-to-br from-red-600 to-orange-500 px-4 py-1.5 text-sm font-black tracking-widest text-white shadow-lg shadow-red-900/50">
-                    VS
-                  </span>
+                  {/* VS badge */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <span className="rounded-full bg-gradient-to-br from-red-600 to-orange-500 px-4 py-1.5 text-sm font-black tracking-widest text-white shadow-lg shadow-red-900/50">
+                      VS
+                    </span>
+                  </div>
                 </div>
+
+                {battlefield && (
+                  <p className="max-w-[240px] text-center text-xs text-yellow-400/80 italic leading-relaxed">
+                    {battlefield.description}
+                  </p>
+                )}
               </div>
 
-              {battlefield && (
-                <p className="max-w-xs text-center text-sm text-yellow-400/80 italic leading-relaxed">
-                  {battlefield.description}
-                </p>
-              )}
-            </div>
-
-            {/* Right: player characters */}
-            <div className="flex flex-col gap-3">
-              {playerCharacters.map((char) => (
-                <CharacterPortrait
-                  key={char.characterId}
-                  characterId={char.characterId}
-                  side="right"
-                />
-              ))}
+              {/* Right: opponent characters */}
+              <CharacterRoster
+                characters={opponentCharacters}
+                label={opponentName}
+                side="right"
+              />
             </div>
           </>
         )}
@@ -301,43 +295,58 @@ function BanCharacterCard({
   );
 }
 
-// ─── Small character portrait for the sides ─────────────────────
+// ─── Character roster: big icons left/right ─────────────────────
 
-function CharacterPortrait({
-  characterId,
+function CharacterRoster({
+  characters,
+  label,
   side,
 }: {
-  characterId: string;
+  characters: CharacterState[];
+  label: string;
   side: 'left' | 'right';
 }) {
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <span className="text-xs font-semibold uppercase tracking-widest text-gray-500">
+        {label}
+      </span>
+      <div className="flex flex-col gap-2">
+        {characters.map((char) => (
+          <CharacterIcon
+            key={char.characterId}
+            characterId={char.characterId}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Big character icon (arcade-style) ──────────────────────────
+
+function CharacterIcon({ characterId }: { characterId: string }) {
   const display = CHARACTER_DISPLAY[characterId];
 
   return (
-    <div
-      className={`flex items-center gap-2 rounded-lg bg-white/5 px-2 py-1.5 backdrop-blur-sm ${
-        side === 'left' ? 'flex-row' : 'flex-row-reverse'
-      }`}
-    >
-      <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-gray-800">
-        <GameImage
-          src={getCharacterIconSrc(characterId)}
-          alt={characterId}
-          className="h-full w-full object-contain"
-          fallback={
-            <div className="flex h-full w-full items-center justify-center">
-              <span className="text-lg text-gray-500">?</span>
-            </div>
-          }
-        />
-      </div>
-      <div className="flex flex-col">
-        <span className="text-xs font-semibold text-gray-200 leading-tight">
-          {display?.displayName || characterId}
-        </span>
-        <span className="text-[10px] text-gray-500">
-          {display?.type || ''}
-        </span>
-      </div>
+    <div className="group relative h-20 w-20 overflow-hidden rounded-xl bg-gray-900/60 ring-1 ring-white/10 transition-all duration-200 hover:ring-yellow-500/40 sm:h-24 sm:w-24">
+      <GameImage
+        src={getCharacterIconSrc(characterId)}
+        alt={characterId}
+        className="h-full w-full scale-110 object-contain transition-transform duration-300 group-hover:scale-125"
+        fallback={
+          <div className="flex h-full w-full items-center justify-center">
+            <span className="text-2xl text-gray-600">?</span>
+          </div>
+        }
+      />
+      {display && (
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-1.5 py-1">
+          <p className="truncate text-center text-[10px] font-semibold text-white/90 leading-tight">
+            {display.displayName}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
