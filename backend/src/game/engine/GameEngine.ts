@@ -171,10 +171,24 @@ export class GameEngine {
         };
     }
 
+    // ── Define current phase for guards below ────────
+    const currentPhase = this.state.getPhase();
+
+    // ── Check revive trigger after action ──────────────
+    // Before win condition check, detect if the Namek battlefield revive
+    // should activate. Only relevant after combat/card effects resolve.
+    if (
+      result.success &&
+      !result.gameOver &&
+      currentPhase !== 'DRAFT' &&
+      currentPhase !== 'PRE_BATTLE'
+    ) {
+      this.checkReviveTrigger();
+    }
+
     // ── Check win condition after every action ──────────
     // Skip during setup phases (DRAFT, BATTLEFIELD, PRE_BATTLE) because
     // characters haven't been placed on the field yet or reveal is playing.
-    const currentPhase = this.state.getPhase();
     if (
       result.success &&
       !result.gameOver &&
@@ -666,7 +680,47 @@ export class GameEngine {
   }
 
   private handleDragonRevive(playerIndex: number, targetCharacterId: string): EngineResult {
-    // Find Esfera del Dragón in the player's hand
+    // ── Namek battlefield revive (no card needed) ────────────
+    if (this.state.isNamekRevivePending(playerIndex)) {
+      const effectResult = this.cards.resolve(
+        this.state,
+        playerIndex,
+        'revive:full',
+        targetCharacterId
+      );
+
+      if (!effectResult.success) {
+        return {
+          success: false,
+          error: { code: 'REVIVE_FAILED', message: effectResult.error || 'Namek revive failed.' },
+        };
+      }
+
+      // Mark revive as used and clear pending state
+      this.state.setNamekReviveUsed(true);
+      this.state.setNamekRevivePending(null);
+      this.state.addLog(
+        'NAMEEK_REVIVE',
+        `Player ${playerIndex} revived ${targetCharacterId} via Namek battlefield effect.`
+      );
+
+      // After revive, run win condition check
+      const winResult = this.winCheck.check(this.state);
+      if (winResult.gameOver) {
+        this.state.setWinner(winResult.winner);
+        this.state.transitionTo('GAME_OVER');
+        this.state.addLog('GAME_OVER', winResult.reason);
+        return {
+          success: true,
+          gameOver: true,
+          state: this.state.toJSON(),
+        };
+      }
+
+      return { success: true };
+    }
+
+    // ── Standard Dragon Revive (card required) ─────────────
     const player = this.state.getPlayer(playerIndex);
     const dragonBallCard = player.hand.find((cardId) =>
       cardId.startsWith('esfera_dragon_')
@@ -753,6 +807,64 @@ export class GameEngine {
 
   getRoomCode(): string {
     return this.state.getState().roomCode;
+  }
+
+  // ─── Namek Revive ────────────────────────────────────────────
+
+  /**
+   * Check if Kid Buu is alive on either player's field.
+   * Kid Buu nullifies the Namek revive trigger.
+   */
+  private isKidBuuAlive(): boolean {
+    const gs = this.state.getState();
+    for (let i = 0; i < 2; i++) {
+      const char = this.state.getCharacter(i, 'kid-buu');
+      if (char && char.isAlive) return true;
+    }
+    return false;
+  }
+
+  /**
+   * After combat or card effects resolve, detect whether the Namek
+   * battlefield revive trigger should activate.
+   *
+   * Conditions (all must be true):
+   * 1. Battlefield effect base is `revive_on_last`
+   * 2. Kid Buu is NOT alive on either field
+   * 3. namekReviveUsed is false (still available)
+   * 4. Any player has exactly 1 alive character AND at least 1 dead character
+   *
+   * On trigger: sets namekRevivePending = playerIndex
+   */
+  private checkReviveTrigger(): void {
+    const gs = this.state.getState();
+
+    // 1. Check battlefield effect
+    const bfBase = gs.battlefield?.effect?.split(':')[0];
+    if (bfBase !== 'revive_on_last') return;
+
+    // 2. Kid Buu blocks revive
+    if (this.isKidBuuAlive()) return;
+
+    // 3. Already used this game
+    if (this.state.isNamekReviveUsed()) return;
+
+    // 4. Check each player: exactly 1 alive + at least 1 dead
+    for (let i = 0; i < 2; i++) {
+      const aliveCount = this.state.getAliveCharacters(i).length;
+      const totalChars = gs.players[i].characters.length;
+      const deadCount = totalChars - aliveCount;
+
+      if (aliveCount === 1 && deadCount >= 1) {
+        // Trigger revive for this player
+        this.state.setNamekRevivePending(i);
+        this.state.addLog(
+          'NAMEEK_REVIVE_TRIGGER',
+          `Player ${i} has 1 alive character and qualifies for Namek battlefield revive.`
+        );
+        return; // Only trigger once per check
+      }
+    }
   }
 
   /**

@@ -544,6 +544,42 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
         </div>
       )}
 
+      {/* ─── Namek Revive Overlay ──────────────────────────── */}
+      {state.gameState?.namekRevivePending === state.playerIndex &&
+       phase === 'WAITING_FOR_ACTION' && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60">
+          <div className="rounded-lg border border-yellow-500/50 bg-gray-900 p-6 shadow-2xl max-w-md w-full mx-4">
+            <h3 className="text-lg font-bold text-yellow-400 mb-2">
+              Namek Battlefield Revive
+            </h3>
+            <p className="text-sm text-gray-400 mb-4">
+              Your last fighter is standing! Choose a dead character to revive:
+            </p>
+            <div className="flex flex-col gap-2">
+              {currentPlayer?.characters
+                .filter((c) => !c.isAlive)
+                .map((char) => (
+                  <button
+                    key={char.characterId}
+                    type="button"
+                    onClick={() => actions.dragonRevive(char.characterId)}
+                    className="rounded border border-gray-600 bg-gray-800 px-4 py-3 text-left text-sm text-white hover:border-yellow-500 hover:bg-gray-700 transition cursor-pointer"
+                  >
+                    <span className="font-medium">{char.characterId}</span>
+                    <span className="text-gray-500 ml-2">(dead)</span>
+                  </button>
+                ))}
+            </div>
+            {(!currentPlayer?.characters.filter((c) => !c.isAlive).length ||
+              currentPlayer?.characters.filter((c) => !c.isAlive).length === 0) && (
+              <p className="text-sm text-red-400 mt-2">
+                No dead characters available to revive.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* ─── Character Modal ─────────────────────────────────── */}
       {modalCharacter && phase && isMyTurn && (
         <CharacterModal

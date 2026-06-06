@@ -152,6 +152,8 @@ export interface GameState {
   secondsRemaining: number | null;
   preBattle: PreBattleState | null;
   bannedCharacters: string[];
+  namekReviveUsed: boolean;
+  namekRevivePending: number | null;
 }
 
 export interface DraftState {

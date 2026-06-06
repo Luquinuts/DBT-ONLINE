@@ -531,4 +531,54 @@ describe('ActionValidator', () => {
       expect(result.valid).toBe(true);
     });
   });
+
+  describe('DRAGON_REVIVE validation (Namek revive)', () => {
+    it('accepts DRAGON_REVIVE when namekRevivePending matches current player', () => {
+      const state = createCombatState();
+      state.getState().namekRevivePending = 0;
+      // Kill a character owned by P0
+      state.getCharacter(0, 'ssj-broly')!.isAlive = false;
+      const result = ActionValidator.validate(state, 0, {
+        type: 'DRAGON_REVIVE',
+        targetCharacterId: 'ssj-broly',
+      });
+      expect(result.valid).toBe(true);
+    });
+
+    it('rejects DRAGON_REVIVE when pending player targets opponent dead character', () => {
+      const state = createCombatState();
+      state.getState().namekRevivePending = 0;
+      // Kill a character owned by P1 (opponent)
+      state.getCharacter(1, 'ssj2-gohan')!.isAlive = false;
+      const result = ActionValidator.validate(state, 0, {
+        type: 'DRAGON_REVIVE',
+        targetCharacterId: 'ssj2-gohan',
+      });
+      expect(result.valid).toBe(false);
+      expect(result.error?.code).toBe('INVALID_TARGET');
+    });
+
+    it('rejects DRAGON_REVIVE for alive character when pending', () => {
+      const state = createCombatState();
+      state.getState().namekRevivePending = 0;
+      // ssj-broly is alive
+      const result = ActionValidator.validate(state, 0, {
+        type: 'DRAGON_REVIVE',
+        targetCharacterId: 'ssj-broly',
+      });
+      expect(result.valid).toBe(false);
+      expect(result.error?.code).toBe('CHARACTER_ALIVE');
+    });
+
+    it('rejects DRAGON_REVIVE when target character does not exist', () => {
+      const state = createCombatState();
+      state.getState().namekRevivePending = 0;
+      const result = ActionValidator.validate(state, 0, {
+        type: 'DRAGON_REVIVE',
+        targetCharacterId: 'nonexistent',
+      });
+      expect(result.valid).toBe(false);
+      expect(result.error?.code).toBe('CHARACTER_NOT_FOUND');
+    });
+  });
 });

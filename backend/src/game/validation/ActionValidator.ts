@@ -660,8 +660,13 @@ export class ActionValidator {
     state: GameStateManager,
     action: GameAction & { type: 'DRAGON_REVIVE' }
   ): ValidationResult {
+    const gs = state.getState();
+    const playerIndex = gs.currentPlayerIndex;
+    const isPending = gs.namekRevivePending === playerIndex;
+
     // Check target exists and is dead
     let found = false;
+    let foundOnPlayerIndex = -1;
     for (let i = 0; i < 2; i++) {
       const char = state.getCharacter(i, action.targetCharacterId);
       if (char) {
@@ -675,6 +680,7 @@ export class ActionValidator {
           };
         }
         found = true;
+        foundOnPlayerIndex = i;
         break;
       }
     }
@@ -684,6 +690,19 @@ export class ActionValidator {
         valid: false,
         error: { code: 'CHARACTER_NOT_FOUND', message: `Character '${action.targetCharacterId}' not found.` },
       };
+    }
+
+    // If Namek revive is pending for this player, validate ownership
+    if (isPending) {
+      if (foundOnPlayerIndex !== playerIndex) {
+        return {
+          valid: false,
+          error: {
+            code: 'INVALID_TARGET',
+            message: 'Namek revive can only target your own dead characters.',
+          },
+        };
+      }
     }
 
     return { valid: true };

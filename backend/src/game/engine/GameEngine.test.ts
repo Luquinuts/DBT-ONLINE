@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { GameEngine } from './GameEngine';
+import { createCharacterState } from '../state/GameState';
 import type { GameAction } from '@dbt-online/shared';
 
 const P1 = 'player1';
@@ -162,6 +163,29 @@ function runTurn(engine: GameEngine, playerId: string, opponentId: string): bool
 
   s = engine.getState();
   return s.phase !== 'GAME_OVER';
+}
+
+/**
+ * Helper: sets up a game and forces the Namek battlefield.
+ * Returns the engine instance and the internal state for manipulation.
+ */
+function setupNamekReviveTest(): { engine: GameEngine; internal: any } {
+  const engine = createEngine();
+  const { p1Picks, p2Picks } = completeDraft(engine);
+  placeCharacters(engine, p1Picks, p2Picks);
+
+  const internal = (engine as any).state;
+  const gs = internal.getState();
+
+  // Override battlefield to Namek with revive_on_last
+  gs.battlefield = {
+    id: 'namek',
+    name: 'Namek',
+    effect: 'revive_on_last:1',
+    description: 'Namek battlefield — revive once when one fighter remains.',
+  };
+
+  return { engine, internal };
 }
 
 describe('GameEngine Integration', () => {
@@ -577,6 +601,165 @@ describe('GameEngine Integration', () => {
       if (s.phase !== 'GAME_OVER') {
         expect(s.turnNumber).toBeGreaterThanOrEqual(2);
       }
+    });
+  });
+
+  describe('Namek revive mechanic', () => {
+    it('triggers namekRevivePending when a player has 1 alive on revive_on_last battlefield', () => {
+      const { engine, internal } = setupNamekReviveTest();
+      const gs = internal.getState();
+
+      // Kill one of P1's characters so they have 2 alive (from 3)
+      gs.players[0].characters[0].isAlive = false;
+      expect(internal.getAliveCharacters(0).length).toBe(2);
+
+      // Kill another so they have exactly 1 alive + ≥1 dead
+      gs.players[0].characters[1].isAlive = false;
+      expect(internal.getAliveCharacters(0).length).toBe(1);
+      expect(gs.namekRevivePending).toBeNull();
+
+      // Run an action to trigger the detection hook
+      const r = engine.handleAction(P1, { type: 'PASS' });
+      expect(r.success).toBe(true);
+
+      // Verify pending is set for P0
+      expect(gs.namekRevivePending).toBe(0);
+      expect(gs.namekReviveUsed).toBe(false);
+    });
+
+    it('does NOT trigger when Kid Buu is alive on either field', () => {
+      const { engine, internal } = setupNamekReviveTest();
+      const gs = internal.getState();
+
+      // Add Kid Buu to P1's field as alive
+      const kidBuuDef = internal.getCharacterDef('kid-buu');
+      const kidBuuState = createCharacterState(kidBuuDef);
+      gs.players[0].characters.push(kidBuuState);
+
+      // Kill all 3 original characters, leaving only Kid Buu alive
+      gs.players[0].characters[0].isAlive = false;
+      gs.players[0].characters[1].isAlive = false;
+      gs.players[0].characters[2].isAlive = false;
+
+      // P0 now has only Kid Buu alive = 1 alive
+      expect(internal.getAliveCharacters(0).length).toBe(1);
+
+      // Run action — should NOT trigger because Kid Buu blocks
+      const r = engine.handleAction(P1, { type: 'PASS' });
+      expect(r.success).toBe(true);
+      expect(gs.namekRevivePending).toBeNull();
+    });
+
+    it('does NOT trigger when namekReviveUsed is already true', () => {
+      const { engine, internal } = setupNamekReviveTest();
+      const gs = internal.getState();
+
+      // Mark revive as already used
+      gs.namekReviveUsed = true;
+
+      // Kill two characters so P0 has 1 alive
+      gs.players[0].characters[0].isAlive = false;
+      gs.players[0].characters[1].isAlive = false;
+      expect(internal.getAliveCharacters(0).length).toBe(1);
+
+      const r = engine.handleAction(P1, { type: 'PASS' });
+      expect(r.success).toBe(true);
+      expect(gs.namekRevivePending).toBeNull();
+    });
+
+    it('does NOT trigger on non-revive battlefields', () => {
+      const { engine, internal } = setupNamekReviveTest();
+      const gs = internal.getState();
+
+      // Change battlefield to something else
+      gs.battlefield = {
+        id: 'tenkaichi',
+        name: 'Tenkaichi Budokai',
+        effect: 'no_definitivas',
+        description: 'Definitivas forbidden.',
+      };
+
+      gs.players[0].characters[0].isAlive = false;
+      gs.players[0].characters[1].isAlive = false;
+      expect(internal.getAliveCharacters(0).length).toBe(1);
+
+      const r = engine.handleAction(P1, { type: 'PASS' });
+      expect(r.success).toBe(true);
+      expect(gs.namekRevivePending).toBeNull();
+    });
+
+    it('DRAGON_REVIVE succeeds without card when namekRevivePending is set', () => {
+      const { engine, internal } = setupNamekReviveTest();
+      const gs = internal.getState();
+
+      // Kill 2 characters so P0 has 1 alive
+      gs.players[0].characters[0].isAlive = false;
+      gs.players[0].characters[1].isAlive = false;
+
+      // Manually set pending (detection would do this, but action changes phase)
+      gs.namekRevivePending = 0;
+      gs.phase = 'WAITING_FOR_ACTION';
+
+      // Ensure no Esfera del Dragón in hand
+      gs.players[0].hand = gs.players[0].hand.filter(
+        (c: string) => !c.startsWith('esfera_dragon_')
+      );
+
+      // Revive without having Esfera del Dragón in hand
+      const deadCharId = gs.players[0].characters[0].characterId;
+      const r = engine.handleAction(P1, {
+        type: 'DRAGON_REVIVE',
+        targetCharacterId: deadCharId,
+      });
+      expect(r.success).toBe(true);
+
+      // Verify post-revive state
+      expect(gs.namekReviveUsed).toBe(true);
+      expect(gs.namekRevivePending).toBeNull();
+      expect(internal.getCharacter(0, deadCharId)!.isAlive).toBe(true);
+    });
+
+    it('rejects DRAGON_REVIVE without card when not pending', () => {
+      const { engine, internal } = setupNamekReviveTest();
+      const gs = internal.getState();
+
+      // Kill a character but don't trigger revive (different battlefield)
+      gs.battlefield = {
+        id: 'tenkaichi',
+        name: 'Tenkaichi Budokai',
+        effect: 'no_definitivas',
+        description: '',
+      };
+      gs.players[0].characters[0].isAlive = false;
+      const deadCharId = gs.players[0].characters[0].characterId;
+
+      // Ensure no Esfera del Dragón in hand
+      gs.players[0].hand = gs.players[0].hand.filter(
+        (c: string) => !c.startsWith('esfera_dragon_')
+      );
+
+      const r = engine.handleAction(P1, {
+        type: 'DRAGON_REVIVE',
+        targetCharacterId: deadCharId,
+      });
+      expect(r.success).toBe(false);
+      expect(r.error?.code).toBe('NO_DRAGON_BALL');
+    });
+
+    it('win condition does NOT trigger when player has 0 alive but revive pending', () => {
+      const { engine, internal } = setupNamekReviveTest();
+      const gs = internal.getState();
+
+      // Kill all P0 characters
+      gs.players[0].characters.forEach((c: any) => { c.isAlive = false; });
+      // Set pending for P0
+      gs.namekRevivePending = 0;
+
+      // Run action that would trigger win check
+      const r = engine.handleAction(P1, { type: 'PASS' });
+      // Game should NOT be over
+      expect(gs.phase).not.toBe('GAME_OVER');
+      expect(gs.winner).toBeNull();
     });
   });
 
