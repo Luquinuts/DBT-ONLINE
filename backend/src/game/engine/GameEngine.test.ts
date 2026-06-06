@@ -14,15 +14,20 @@ function createEngine(): GameEngine {
 }
 
 /**
- * Runs the full draft sequence for both players using the first available character each time.
- * Returns the picks so callers know which characters were selected.
+ * Runs the full draft sequence for both players using available characters.
+ * Skips paired characters (ssj-rose-black-goku) to avoid auto-pairing disruption
+ * in generic integration tests. Use specific character IDs when testing pairing.
  */
 function completeDraft(engine: GameEngine): { p1Picks: string[]; p2Picks: string[] } {
   const p1Picks: string[] = [];
   const p2Picks: string[] = [];
 
   function available(): string[] {
-    return engine.getState().draftState!.availableCharacters;
+    // Filter out paired (ssj-rose-black-goku) and battlefield-affecting (kid-buu)
+    // characters to keep pick counts and battlefield state predictable.
+    return engine.getState().draftState!.availableCharacters.filter(
+      (id) => id !== 'ssj-rose-black-goku' && id !== 'kid-buu'
+    );
   }
 
   // P0 picks 1

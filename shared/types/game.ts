@@ -16,6 +16,7 @@ export interface CharacterDef {
     habilidad?: AbilityDef;
     definitiva?: DefinitivaDef;
   };
+  pairedWith?: string;   // auto-draft this character when this one is picked
   icons: {
     rage?: boolean;
     mejora?: boolean;

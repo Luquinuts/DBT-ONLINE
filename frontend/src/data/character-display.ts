@@ -69,6 +69,15 @@ export const CHARACTER_DISPLAY: Record<string, CharacterDisplayEntry> = {
     stats: { vida: 6, lentitud: 1, ataque: 2 },
     color: '#dc2626',
   },
+  zamasu: {
+    displayName: 'Zamasu',
+    type: 'SUPPORT',
+    stats: { vida: 4, lentitud: 0, ataque: 1 },
+    color: '#38bdf8',
+    abilities: {
+      habilidad: { cooldown: 0 },
+    },
+  },
   'ssj2-gohan': {
     displayName: 'SSJ2 Gohan',
     type: 'DAMAGE',
@@ -156,11 +165,12 @@ export const CHARACTER_DISPLAY: Record<string, CharacterDisplayEntry> = {
  */
 /**
  * Characters whose BASE FORM has a `habilidad` ability.
- * SSJ Rosé Black Goku is excluded — only Zamasu (alternate form) has a habilidad.
+ * SSJ Rosé Black Goku is excluded — only Zamasu has a habilidad.
  * When form-aware ability checks are implemented, this set should be replaced
  * with per-form data from the backend.
  */
 export const CHARACTERS_WITH_HABILIDAD = new Set([
   'ssj-god-goku', 'golden-frieza', 'hit', 'ssj2-gohan',
   'piccolo', 'jiren', 'ssj-future-trunks', 'ssj-goku',
+  'zamasu',
 ]);

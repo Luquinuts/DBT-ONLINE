@@ -1,7 +1,9 @@
 import type { CharacterDef, AbilityDef, PassiveDef, DefinitivaDef } from '@dbt-online/shared';
 
 // ─── Character Registry ─────────────────────────────────────────
-// 16 characters fully defined using the CharacterDef interface.
+// 17 characters fully defined using the CharacterDef interface.
+// NOTE: numbered comments reflect the count. Zamasu (#5) is auto-drafted
+// with SSJ Rosé Black Goku (#4).
 
 export const CHARACTERS: CharacterDef[] = [
   // ── 1. SSJ GOD GOKU ────────────────────────────────────────────
@@ -75,6 +77,7 @@ export const CHARACTERS: CharacterDef[] = [
   // ── 4. SSJ ROSÉ BLACK GOKU (AND ZAMASU) ────────────────────────
   // Dual character with two forms. Starts as SSJ Rosé Black Goku.
   // See ZAMASU_FORM_DATA export for the alternate form.
+  // When drafted, Zamasu is auto-added to the team (pairedWith).
   {
     id: 'ssj-rose-black-goku',
     name: 'SSJ Rosé Black Goku',
@@ -89,10 +92,38 @@ export const CHARACTERS: CharacterDef[] = [
         condition: 'healed_from_1hp',
       },
     },
+    pairedWith: 'zamasu',
     icons: { change: true, rage: true },
   },
 
-  // ── 5. SSJ BROLY ───────────────────────────────────────────────
+  // ── 5. ZAMASU ───────────────────────────────────────────────────
+  // Companion character — auto-drafted when SSJ Rosé Black Goku is picked.
+  // ZAMASU_FORM_DATA export below still exists for backward compat.
+  {
+    id: 'zamasu',
+    name: 'Zamasu',
+    type: 'SUPPORT',
+    stats: { vida: 4, lentitud: 0, ataque: 1 },
+    abilities: {
+      pasiva: {
+        name: 'Immortal Regeneration',
+        description:
+          'Cada turno recupera 1 de vida, puede recuperar hasta máximo 3, aun sin estar en el campo de batalla',
+        type: 'STAT_BOOST',
+        value: 1,
+      },
+      habilidad: {
+        name: 'Divine Intervention',
+        description: 'Puede recuperar +3 a un PJ',
+        cooldown: 0,
+        effect: 'heal_ally:3',
+        usesPerGame: 1,
+      },
+    },
+    icons: {},
+  },
+
+  // ── 7. SSJ BROLY ───────────────────────────────────────────────
   {
     id: 'ssj-broly',
     name: 'SSJ Broly',
@@ -110,7 +141,7 @@ export const CHARACTERS: CharacterDef[] = [
     icons: { rage: true },
   },
 
-  // ── 6. PERFECT CELL ────────────────────────────────────────────
+  // ── 8. PERFECT CELL ────────────────────────────────────────────
   {
     id: 'perfect-cell',
     name: 'Perfect Cell',
@@ -136,7 +167,7 @@ export const CHARACTERS: CharacterDef[] = [
     icons: {},
   },
 
-  // ── 7. KID BUU ─────────────────────────────────────────────────
+  // ── 9. KID BUU ─────────────────────────────────────────────────
   {
     id: 'kid-buu',
     name: 'Kid Buu',
@@ -152,7 +183,7 @@ export const CHARACTERS: CharacterDef[] = [
     icons: {},
   },
 
-  // ── 8. BEERUS ───────────────────────────────────────────────────
+  // ── 10. BEERUS ──────────────────────────────────────────────────
   {
     id: 'beerus',
     name: 'Beerus',
@@ -170,7 +201,7 @@ export const CHARACTERS: CharacterDef[] = [
     icons: {},
   },
 
-  // ── 9. HIT ──────────────────────────────────────────────────────
+  // ── 11. HIT ─────────────────────────────────────────────────────
   {
     id: 'hit',
     name: 'Hit',
@@ -188,7 +219,7 @@ export const CHARACTERS: CharacterDef[] = [
     icons: { rage: true },
   },
 
-  // ── 10. SSJ 2 GOHAN ────────────────────────────────────────────
+  // ── 12. SSJ 2 GOHAN ────────────────────────────────────────────
   {
     id: 'ssj2-gohan',
     name: 'SSJ 2 Gohan',
@@ -213,7 +244,7 @@ export const CHARACTERS: CharacterDef[] = [
     icons: {},
   },
 
-  // ── 11. A17&A18 ─────────────────────────────────────────────────
+  // ── 13. A17&A18 ─────────────────────────────────────────────────
   // Dual-entity character: two separate HP pools but share attack.
   {
     id: 'a17-a18',
@@ -231,7 +262,7 @@ export const CHARACTERS: CharacterDef[] = [
     icons: {},
   },
 
-  // ── 12. SSJ3 GOTENKS ───────────────────────────────────────────
+  // ── 14. SSJ3 GOTENKS ───────────────────────────────────────────
   {
     id: 'ssj3-gotenks',
     name: 'SSJ3 Gotenks',
@@ -249,7 +280,7 @@ export const CHARACTERS: CharacterDef[] = [
     icons: {},
   },
 
-  // ── 13. PICCOLO ─────────────────────────────────────────────────
+  // ── 15. PICCOLO ─────────────────────────────────────────────────
   {
     id: 'piccolo',
     name: 'Piccolo',
@@ -268,7 +299,7 @@ export const CHARACTERS: CharacterDef[] = [
     icons: {},
   },
 
-  // ── 14. JIREN ───────────────────────────────────────────────────
+  // ── 16. JIREN ───────────────────────────────────────────────────
   {
     id: 'jiren',
     name: 'Jiren',
@@ -294,7 +325,7 @@ export const CHARACTERS: CharacterDef[] = [
     icons: {},
   },
 
-  // ── 15. SSJ FUTURE TRUNKS ──────────────────────────────────────
+  // ── 17. SSJ FUTURE TRUNKS ──────────────────────────────────────
   {
     id: 'ssj-future-trunks',
     name: 'SSJ Future Trunks',
@@ -312,7 +343,7 @@ export const CHARACTERS: CharacterDef[] = [
     icons: {},
   },
 
-  // ── 16. SSJ GOKU ───────────────────────────────────────────────
+  // ── 18. SSJ GOKU ───────────────────────────────────────────────
   {
     id: 'ssj-goku',
     name: 'SSJ Goku',
@@ -353,6 +384,8 @@ export function getCharacterById(id: string): CharacterDef | undefined {
 // ─── Dual-Form Data ──────────────────────────────────────────────
 // SSJ Rosé Black Goku can switch to Zamasu form in battle.
 // Engine uses this data to apply the alternate form at runtime.
+// NOTE: Zamasu is now also a standalone character (#5 in CHARACTERS).
+// ZAMASU_FORM_DATA is kept for backward compatibility (SWITCH_FORM mechanic).
 
 export interface AlternateFormData {
   name: string;
@@ -385,6 +418,8 @@ export const ZAMASU_FORM_DATA: AlternateFormData = {
 /**
  * Characters with special engine-level behaviors not fully captured
  * by the standard CharacterDef fields:
+ *
+ * - Zamasu: paired with SSJ Rosé Black Goku (auto-drafted). Has Immortal Regeneration + Divine Intervention.
  *
  * - Kid Buu: attacks twice per action (same target). Handled at combat level.
  * - SSJ2 Gohan: Kamehameha only does 6 damage when vida_remaining ≤ 2.

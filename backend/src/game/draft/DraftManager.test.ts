@@ -8,6 +8,13 @@ const ALL_CHAR_IDS = [
   'a17-a18', 'ssj3-gotenks', 'piccolo', 'jiren', 'ssj-future-trunks', 'ssj-goku',
 ];
 
+// Characters guaranteed to NOT have pairedWith (for standard pick-sequence tests)
+const UNPAIRED_IDS = [
+  'ssj-god-goku', 'ssj-blue-vegeta', 'golden-frieza',
+  'ssj-broly', 'perfect-cell', 'kid-buu', 'beerus', 'hit', 'ssj2-gohan',
+  'a17-a18', 'ssj3-gotenks', 'piccolo', 'jiren', 'ssj-future-trunks', 'ssj-goku',
+];
+
 describe('DraftManager', () => {
   let state: GameStateManager;
   let draft: DraftManager;
@@ -18,37 +25,40 @@ describe('DraftManager', () => {
   });
 
   describe('Pick sequence validation', () => {
-    it('follows correct pick sequence: P0×1 → P1×2 → P0×2 → P1×1', () => {
-      const avail = () => state.getDraftState()!.availableCharacters;
+    it('follows correct pick sequence: P0×1 → P1×2 → P0×2 → P1×1 (no paired chars)', () => {
+      // Use UNPAIRED_IDS directly to avoid auto-pairing from Black Goku + Zamasu
+      const unpaired = () => state.getDraftState()!.availableCharacters.filter(
+        (id) => UNPAIRED_IDS.includes(id)
+      );
 
       // Step 0: P0 picks 1
-      let result = draft.handleDraftSelect(state, avail()[0], 0);
+      let result = draft.handleDraftSelect(state, unpaired()[0], 0);
       expect(result.success).toBe(true);
       expect(state.getDraftState()!.picks[0].length).toBe(1);
       expect(state.getDraftState()!.picks[1].length).toBe(0);
 
       // Step 1: P1 picks 2 (first)
-      result = draft.handleDraftSelect(state, avail()[0], 1);
+      result = draft.handleDraftSelect(state, unpaired()[0], 1);
       expect(result.success).toBe(true);
       expect(state.getDraftState()!.picks[1].length).toBe(1);
 
       // Step 1: P1 picks 2 (second)
-      result = draft.handleDraftSelect(state, avail()[0], 1);
+      result = draft.handleDraftSelect(state, unpaired()[0], 1);
       expect(result.success).toBe(true);
       expect(state.getDraftState()!.picks[1].length).toBe(2);
 
       // Step 2: P0 picks 2 (first)
-      result = draft.handleDraftSelect(state, avail()[0], 0);
+      result = draft.handleDraftSelect(state, unpaired()[0], 0);
       expect(result.success).toBe(true);
       expect(state.getDraftState()!.picks[0].length).toBe(2);
 
       // Step 2: P0 picks 2 (second)
-      result = draft.handleDraftSelect(state, avail()[0], 0);
+      result = draft.handleDraftSelect(state, unpaired()[0], 0);
       expect(result.success).toBe(true);
       expect(state.getDraftState()!.picks[0].length).toBe(3);
 
       // Step 3: P1 picks 1 (last)
-      result = draft.handleDraftSelect(state, avail()[0], 1);
+      result = draft.handleDraftSelect(state, unpaired()[0], 1);
       expect(result.success).toBe(true);
       expect(state.getDraftState()!.picks[1].length).toBe(3);
 
@@ -74,6 +84,24 @@ describe('DraftManager', () => {
       expect(state.getDraftState()!.availableCharacters).not.toContain(firstAvail);
     });
 
+    it('auto-pairs zamasu when ssj-rose-black-goku is picked', () => {
+      // P0 picks ssj-rose-black-goku
+      const result = draft.handleDraftSelect(state, 'ssj-rose-black-goku', 0);
+      expect(result.success).toBe(true);
+
+      const picks0 = state.getDraftState()!.picks[0];
+      expect(picks0).toContain('ssj-rose-black-goku');
+      expect(picks0).toContain('zamasu');
+      // zamasu should NOT be in available (it's not in ALL_CHAR_IDS anyway)
+      expect(state.getDraftState()!.availableCharacters).not.toContain('ssj-rose-black-goku');
+    });
+
+    it('does not auto-pair for non-paired characters', () => {
+      const result = draft.handleDraftSelect(state, 'ssj-god-goku', 0);
+      expect(result.success).toBe(true);
+      expect(state.getDraftState()!.picks[0]).toEqual(['ssj-god-goku']);
+    });
+
     it('rejects pick if draft is not in PICKING phase', () => {
       state.getDraftState()!.phase = 'PLACING';
       const result = draft.handleDraftSelect(state, 'ssj-broly', 0);
@@ -84,13 +112,15 @@ describe('DraftManager', () => {
 
   describe('After all picks, both players have 3 characters', () => {
     function completePicks(): void {
-      const avail = () => state.getDraftState()!.availableCharacters;
-      draft.handleDraftSelect(state, avail()[0], 0);   // P0 pick 1
-      draft.handleDraftSelect(state, avail()[0], 1);   // P1 pick 1
-      draft.handleDraftSelect(state, avail()[0], 1);   // P1 pick 2
-      draft.handleDraftSelect(state, avail()[0], 0);   // P0 pick 2
-      draft.handleDraftSelect(state, avail()[0], 0);   // P0 pick 3
-      draft.handleDraftSelect(state, avail()[0], 1);   // P1 pick 3
+      const unpaired = () => state.getDraftState()!.availableCharacters.filter(
+        (id) => UNPAIRED_IDS.includes(id)
+      );
+      draft.handleDraftSelect(state, unpaired()[0], 0);   // P0 pick 1
+      draft.handleDraftSelect(state, unpaired()[0], 1);   // P1 pick 1
+      draft.handleDraftSelect(state, unpaired()[0], 1);   // P1 pick 2
+      draft.handleDraftSelect(state, unpaired()[0], 0);   // P0 pick 2
+      draft.handleDraftSelect(state, unpaired()[0], 0);   // P0 pick 3
+      draft.handleDraftSelect(state, unpaired()[0], 1);   // P1 pick 3
     }
 
     it('both players have 3 picks each after full sequence', () => {
@@ -119,13 +149,15 @@ describe('DraftManager', () => {
 
   describe('PLACING phase', () => {
     function completePicks(): void {
-      const avail = () => state.getDraftState()!.availableCharacters;
-      draft.handleDraftSelect(state, avail()[0], 0);
-      draft.handleDraftSelect(state, avail()[0], 1);
-      draft.handleDraftSelect(state, avail()[0], 1);
-      draft.handleDraftSelect(state, avail()[0], 0);
-      draft.handleDraftSelect(state, avail()[0], 0);
-      draft.handleDraftSelect(state, avail()[0], 1);
+      const unpaired = () => state.getDraftState()!.availableCharacters.filter(
+        (id) => UNPAIRED_IDS.includes(id)
+      );
+      draft.handleDraftSelect(state, unpaired()[0], 0);
+      draft.handleDraftSelect(state, unpaired()[0], 1);
+      draft.handleDraftSelect(state, unpaired()[0], 1);
+      draft.handleDraftSelect(state, unpaired()[0], 0);
+      draft.handleDraftSelect(state, unpaired()[0], 0);
+      draft.handleDraftSelect(state, unpaired()[0], 1);
     }
 
     it('accepts valid character placement from P0', () => {
