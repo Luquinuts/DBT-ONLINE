@@ -5,8 +5,14 @@ import type { UseGameReturn } from '@/lib/useGame';
 import { DraftStatus } from './DraftStatus';
 import { CharacterPickCard } from './CharacterPickCard';
 import { PlaceOrderArea } from './PlaceOrderArea';
+import { GameImage } from '@/components/game/GameImage';
 import { CHARACTER_DISPLAY } from '@/data/character-display';
-import { getBackgroundSrc } from '@/lib/assets';
+import { getBackgroundSrc, getCharacterIconSrc } from '@/lib/assets';
+
+/** Known paired characters displayed on the frontend. */
+const PICK_PAIRS: Record<string, string> = {
+  'ssj-rose-black-goku': 'zamasu',
+};
 
 interface Props {
   state: GameUIState;
@@ -68,16 +74,43 @@ export function DraftPhase({ state, actions }: Props) {
           {myPicks.length === 0 ? (
             <p className="text-center text-xs text-gray-500">-</p>
           ) : (
-            <ul className="space-y-1">
-              {myPicks.map((id) => (
-                <li
-                  key={id}
-                  className="truncate rounded bg-gray-700/50 px-2 py-1 text-sm text-white"
-                >
-                  {CHARACTER_DISPLAY[id]?.displayName || id}
-                </li>
-              ))}
-            </ul>
+            <div className="flex flex-wrap justify-center gap-2">
+              {myPicks.map((id) => {
+                const pairPartner = PICK_PAIRS[id];
+                const isPaidPartner = pairPartner && myPicks.includes(pairPartner);
+                return (
+                  <div key={id} className="flex flex-col items-center gap-1">
+                    {/* Card */}
+                    <div
+                      className={`relative aspect-[3/4] w-16 overflow-hidden rounded-lg border-2 bg-black/40 ${
+                        isPaidPartner
+                          ? 'border-yellow-400/60 ring-1 ring-yellow-400/30'
+                          : 'border-white/20'
+                      }`}
+                    >
+                      <GameImage
+                        src={getCharacterIconSrc(id)}
+                        alt={id}
+                        className="h-full w-full object-contain p-1"
+                        fallback={
+                          <span className="text-xs text-gray-600">
+                            {CHARACTER_DISPLAY[id]?.displayName?.[0] || '?'}
+                          </span>
+                        }
+                      />
+                    </div>
+                    {/* Name */}
+                    <span className="max-w-16 truncate text-center text-[10px] text-white/80">
+                      {CHARACTER_DISPLAY[id]?.displayName?.split(' ').pop() || id}
+                    </span>
+                    {/* Pair badge */}
+                    {pairPartner && myPicks.includes(pairPartner) && (
+                      <span className="text-[9px] text-yellow-400/70">+ {CHARACTER_DISPLAY[pairPartner]?.displayName?.split(' ').pop() || pairPartner}</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
 
@@ -89,16 +122,43 @@ export function DraftPhase({ state, actions }: Props) {
           {opponentPicks.length === 0 ? (
             <p className="text-center text-xs text-gray-500">-</p>
           ) : (
-            <ul className="space-y-1">
-              {opponentPicks.map((id) => (
-                <li
-                  key={id}
-                  className="truncate rounded bg-gray-700/50 px-2 py-1 text-sm text-gray-300"
-                >
-                  {CHARACTER_DISPLAY[id]?.displayName || id}
-                </li>
-              ))}
-            </ul>
+            <div className="flex flex-wrap justify-center gap-2">
+              {opponentPicks.map((id) => {
+                const pairPartner = PICK_PAIRS[id];
+                const isPaidPartner = pairPartner && opponentPicks.includes(pairPartner);
+                return (
+                  <div key={id} className="flex flex-col items-center gap-1">
+                    {/* Card */}
+                    <div
+                      className={`relative aspect-[3/4] w-16 overflow-hidden rounded-lg border-2 bg-black/40 ${
+                        isPaidPartner
+                          ? 'border-yellow-400/60 ring-1 ring-yellow-400/30'
+                          : 'border-white/10'
+                      }`}
+                    >
+                      <GameImage
+                        src={getCharacterIconSrc(id)}
+                        alt={id}
+                        className="h-full w-full object-contain p-1"
+                        fallback={
+                          <span className="text-xs text-gray-600">
+                            {CHARACTER_DISPLAY[id]?.displayName?.[0] || '?'}
+                          </span>
+                        }
+                      />
+                    </div>
+                    {/* Name */}
+                    <span className="max-w-16 truncate text-center text-[10px] text-white/60">
+                      {CHARACTER_DISPLAY[id]?.displayName?.split(' ').pop() || id}
+                    </span>
+                    {/* Pair badge */}
+                    {pairPartner && opponentPicks.includes(pairPartner) && (
+                      <span className="text-[9px] text-yellow-400/70">+ {CHARACTER_DISPLAY[pairPartner]?.displayName?.split(' ').pop() || pairPartner}</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
       </div>
