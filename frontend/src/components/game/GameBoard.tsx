@@ -599,6 +599,13 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
             handleDefinitiva(modalCharacterId!);
             setModalCharacterId(null);
           }}
+          onSwitchForm={() => {
+            const targetForm = modalCharacter?.currentForm === 'zamasu'
+              ? modalCharacterId!
+              : 'zamasu';
+            actions.switchForm(modalCharacterId!, targetForm);
+            setModalCharacterId(null);
+          }}
           onClose={() => setModalCharacterId(null)}
         />
       )}

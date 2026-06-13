@@ -584,10 +584,10 @@ export class ActionValidator {
     const gs = state.getState();
 
     // Must be in the right phase (own turn, before attacking or ending)
-    if (gs.phase !== 'WAITING_FOR_ACTION') {
+    if (gs.phase !== 'WAITING_FOR_ACTION' && gs.phase !== 'ADVANCE') {
       return {
         valid: false,
-        error: { code: 'WRONG_PHASE', message: 'Can only switch forms during your action phase.' },
+        error: { code: 'WRONG_PHASE', message: 'Can only switch forms during your action or advance phase.' },
       };
     }
 

@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import type { CharacterState, GamePhase } from '@dbt-online/shared';
-import { CHARACTER_DISPLAY, CHARACTERS_WITH_HABILIDAD } from '@/data/character-display';
+import { CHARACTER_DISPLAY, CHARACTERS_WITH_HABILIDAD, CHARACTERS_WITH_SWITCH_FORM } from '@/data/character-display';
 import { getCharacterImageSrc } from '@/lib/assets';
 import { GameImage } from './GameImage';
 
@@ -15,6 +15,7 @@ interface CharacterModalProps {
   onAdvance: () => void;
   onAbility: () => void;
   onDefinitiva: () => void;
+  onSwitchForm: () => void;
   onClose: () => void;
 }
 
@@ -28,6 +29,7 @@ export function CharacterModal({
   onAdvance,
   onAbility,
   onDefinitiva,
+  onSwitchForm,
   onClose,
 }: CharacterModalProps) {
   const charDef = CHARACTER_DISPLAY[character.characterId];
@@ -39,6 +41,14 @@ export function CharacterModal({
   const defKiCost = hasDefinitiva?.kiCost ?? Infinity;
   const isDefDisabled = playerKi < defKiCost;
   const isHabDisabled = character.abilityCooldownRemaining > 0;
+
+  // ─── Switch-form computations ──────────────────────────────
+  const hasSwitchForm = CHARACTERS_WITH_SWITCH_FORM.has(character.characterId);
+  const isInZamasuForm = character.currentForm === 'zamasu';
+  const switchTargetName = isInZamasuForm
+    ? charDef?.displayName ?? 'Black Goku'
+    : 'Zamasu';
+  const canSwitch = !character.hasSwitchedThisTurn && !character.hasAttackedThisTurn;
 
   // ─── Close on Escape key ────────────────────────────────────
   useEffect(() => {
@@ -120,6 +130,24 @@ export function CharacterModal({
               className="w-full rounded-xl border border-green-500/30 bg-green-600/70 px-4 py-3 text-sm font-semibold text-white transition active:scale-95 hover:bg-green-500/80"
             >
               ▶ Avanzar ({character.advanceCounter}/{character.currentLentitud})
+            </button>
+          )}
+
+          {/* Cambiar forma — dual-form characters (Black Goku / Zamasu) */}
+          {hasSwitchForm && (phase === 'WAITING_FOR_ACTION' || phase === 'ADVANCE') && (
+            <button
+              type="button"
+              disabled={!canSwitch}
+              onClick={onSwitchForm}
+              className={`w-full rounded-xl border px-4 py-3 text-sm font-semibold transition active:scale-95 ${
+                !canSwitch
+                  ? 'cursor-not-allowed border-gray-700/30 bg-gray-800/50 text-gray-600'
+                  : 'border-amber-500/30 bg-amber-600/70 text-white hover:bg-amber-500/80'
+              }`}
+            >
+              🔄 Cambiar a {switchTargetName}
+              {!canSwitch && character.hasSwitchedThisTurn && ' (ya cambiaste este turno)'}
+              {!canSwitch && character.hasAttackedThisTurn && ' (ya atacaste este turno)'}
             </button>
           )}
 

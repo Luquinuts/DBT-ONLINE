@@ -160,3 +160,11 @@ export const CHARACTERS_WITH_HABILIDAD = new Set([
   'piccolo', 'jiren', 'ssj-future-trunks', 'ssj-goku',
   'ssj-rose-black-goku',
 ]);
+
+/**
+ * Character IDs that have a switchForm (dual-form mechanic).
+ * Used for conditional switch-form button rendering in CharacterModal.
+ */
+export const CHARACTERS_WITH_SWITCH_FORM = new Set([
+  'ssj-rose-black-goku',
+]);
