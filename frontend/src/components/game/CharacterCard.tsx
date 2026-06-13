@@ -30,7 +30,7 @@ export function CharacterCard({
   isDefending,
   compact,
 }: CharacterCardProps) {
-  const charDef = CHARACTER_DISPLAY[character.characterId];
+  const charDef = CHARACTER_DISPLAY[character.currentForm ?? character.characterId];
   const isDead = !character.isAlive;
   const canAttack = character.advanceCounter >= character.currentLentitud;
 
@@ -73,7 +73,7 @@ export function CharacterCard({
       >
         <HoloCard className="w-full">
           <GameImage
-            src={getCharacterImageSrc(character.characterId)}
+            src={getCharacterImageSrc(character.currentForm ?? character.characterId)}
             alt={charDef.displayName}
             className="w-full object-contain"
             fallback={

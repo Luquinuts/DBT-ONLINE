@@ -458,9 +458,7 @@ export function GameBoard({ state, actions, onLeave }: GameBoardProps) {
               isMyTurn={isMyTurn}
               hasAdvancedThisTurn={currentPlayer.hasAdvancedThisTurn}
               hasPlayedEquipableThisTurn={currentPlayer.hasPlayedEquipableThisTurn}
-              canRedrawThisTurn={currentPlayer.canRedrawThisTurn}
               onPass={handlePass}
-              onRedraw={handleRedraw}
               onEndTurn={handleEndTurn}
             />
           )}

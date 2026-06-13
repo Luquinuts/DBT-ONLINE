@@ -69,6 +69,13 @@ export const CHARACTER_DISPLAY: Record<string, CharacterDisplayEntry> = {
     stats: { vida: 6, lentitud: 1, ataque: 2 },
     color: '#dc2626',
   },
+  // ── Switch-form entries (not standalone characters) ────────
+  zamasu: {
+    displayName: 'Zamasu',
+    type: 'SUPPORT',
+    stats: { vida: 4, lentitud: 0, ataque: 1 },
+    color: '#38bdf8',
+  },
   'ssj2-gohan': {
     displayName: 'SSJ2 Gohan',
     type: 'DAMAGE',

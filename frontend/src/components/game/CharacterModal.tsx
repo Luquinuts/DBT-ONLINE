@@ -32,8 +32,8 @@ export function CharacterModal({
   onSwitchForm,
   onClose,
 }: CharacterModalProps) {
-  const charDef = CHARACTER_DISPLAY[character.characterId];
-  const hasHabilidad = CHARACTERS_WITH_HABILIDAD.has(character.characterId);
+  const charDef = CHARACTER_DISPLAY[character.currentForm ?? character.characterId];
+  const hasHabilidad = CHARACTERS_WITH_HABILIDAD.has(character.currentForm ?? character.characterId);
   const hasDefinitiva = charDef?.abilities?.definitiva;
   const canAdvance = character.advanceCounter < character.currentLentitud;
 
@@ -109,7 +109,7 @@ export function CharacterModal({
           style={{ backgroundColor: charDef.color + '20' }}
         >
           <GameImage
-            src={getCharacterImageSrc(character.characterId)}
+            src={getCharacterImageSrc(character.currentForm ?? character.characterId)}
             alt={charDef.displayName}
             className="w-full object-contain"
             fallback={

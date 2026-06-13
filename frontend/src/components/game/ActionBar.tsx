@@ -7,9 +7,7 @@ interface ActionBarProps {
   isMyTurn: boolean;
   hasAdvancedThisTurn: boolean;
   hasPlayedEquipableThisTurn: boolean;
-  canRedrawThisTurn: boolean;
   onPass: () => void;
-  onRedraw: () => void;
   onEndTurn: () => void;
 }
 
@@ -67,9 +65,7 @@ export function ActionBar({
   isMyTurn,
   hasAdvancedThisTurn,
   hasPlayedEquipableThisTurn,
-  canRedrawThisTurn,
   onPass,
-  onRedraw,
   onEndTurn,
 }: ActionBarProps) {
   const config = PHASE_CONFIG[phase] || PHASE_CONFIG.WAITING_FOR_ACTION;
@@ -84,18 +80,6 @@ export function ActionBar({
       {/* ─── Action buttons ─────────────────────────────────── */}
       {showControls && (
         <div className="flex items-center justify-center gap-3">
-          {/* Redraw button */}
-          {canRedrawThisTurn && (
-            <button
-              type="button"
-              onClick={onRedraw}
-              className="rounded-lg bg-indigo-700/80 px-4 py-2 text-sm font-semibold text-white
-                         transition hover:bg-indigo-600 active:scale-95 shadow-md"
-            >
-              Robar carta
-            </button>
-          )}
-
           {/* Pass button */}
           {config.showPass && (
             <button
