@@ -146,29 +146,29 @@ export default function HomePage() {
 
               {/* ── Right grid: 2×2 ──────────────── */}
               <div className="md:col-span-2 grid grid-cols-2 gap-6 h-full">
-                {/* Clasificatoria */}
-                <div className="menu-card rounded-xl flex flex-col group relative cursor-not-allowed">
+                {/* Clasificatoria (bloqueada) */}
+                <div className="menu-card rounded-xl flex flex-col group relative cursor-not-allowed opacity-40 grayscale">
                   <div className="scanlines"></div>
-                  <div className="absolute inset-0 bg-gradient-to-tr from-red-900/60 to-black/60 group-hover:from-red-800/80 transition-colors"></div>
+                  <div className="absolute inset-0 bg-gradient-to-tr from-gray-700/60 to-black/60"></div>
                   <div className="mt-auto z-20 p-5 text-gradient-bg w-full absolute bottom-0">
-                    <h2 className="text-3xl md:text-4xl font-bold text-white uppercase tracking-wider glow-text">
+                    <h2 className="text-3xl md:text-4xl font-bold text-gray-400 uppercase tracking-wider">
                       Partida<br />Clasificatoria
                     </h2>
-                    <p className="text-gray-400 text-xs md:text-sm uppercase tracking-wide">
+                    <p className="text-gray-600 text-xs md:text-sm uppercase tracking-wide">
                       Compite por el rango Z
                     </p>
                   </div>
                 </div>
 
-                {/* Misiones */}
-                <div className="menu-card rounded-xl flex flex-col group relative cursor-not-allowed">
+                {/* Misiones (bloqueada) */}
+                <div className="menu-card rounded-xl flex flex-col group relative cursor-not-allowed opacity-40 grayscale">
                   <div className="scanlines"></div>
-                  <div className="absolute inset-0 bg-gradient-to-br from-green-900/60 to-black/60 group-hover:from-green-800/80 transition-colors"></div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-gray-700/60 to-black/60"></div>
                   <div className="mt-auto z-20 p-5 text-gradient-bg w-full absolute bottom-0">
-                    <h2 className="text-3xl md:text-4xl font-bold text-white uppercase tracking-wider glow-text">
+                    <h2 className="text-3xl md:text-4xl font-bold text-gray-400 uppercase tracking-wider">
                       Misiones
                     </h2>
-                    <p className="text-gray-400 text-xs md:text-sm uppercase tracking-wide">
+                    <p className="text-gray-600 text-xs md:text-sm uppercase tracking-wide">
                       Historia y eventos diarios
                     </p>
                   </div>
