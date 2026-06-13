@@ -84,15 +84,15 @@ describe('DraftManager', () => {
       expect(state.getDraftState()!.availableCharacters).not.toContain(firstAvail);
     });
 
-    it('auto-pairs zamasu when ssj-rose-black-goku is picked', () => {
+    it('does not auto-pair zamasu — switch form is internal to the character', () => {
       // P0 picks ssj-rose-black-goku
       const result = draft.handleDraftSelect(state, 'ssj-rose-black-goku', 0);
       expect(result.success).toBe(true);
 
       const picks0 = state.getDraftState()!.picks[0];
       expect(picks0).toContain('ssj-rose-black-goku');
-      expect(picks0).toContain('zamasu');
-      // zamasu should NOT be in available (it's not in ALL_CHAR_IDS anyway)
+      // zamasu is NOT a separate pick — it's an internal switch form
+      expect(picks0).not.toContain('zamasu');
       expect(state.getDraftState()!.availableCharacters).not.toContain('ssj-rose-black-goku');
     });
 

@@ -2,6 +2,25 @@
 
 export type CharacterType = 'TANQUE' | 'DAMAGE' | 'SUPPORT';
 
+export interface SwitchFormDef {
+  id: string;
+  name: string;
+  type: CharacterType;
+  stats: {
+    vida: number;
+    lentitud: number;
+    ataque: number;
+  };
+  abilities: {
+    pasiva?: PassiveDef;
+    habilidad?: AbilityDef;
+    definitiva?: DefinitivaDef;
+  };
+  icons: {
+    rage?: boolean;
+  };
+}
+
 export interface CharacterDef {
   id: string;
   name: string;
@@ -16,7 +35,6 @@ export interface CharacterDef {
     habilidad?: AbilityDef;
     definitiva?: DefinitivaDef;
   };
-  pairedWith?: string;   // auto-draft this character when this one is picked
   icons: {
     rage?: boolean;
     mejora?: boolean;
@@ -24,6 +42,7 @@ export interface CharacterDef {
     equippableKi?: boolean; // for UI Goku (needs ki to equip)
     deathIcon?: boolean;    // for Golden Frieza's Salvation
   };
+  switchForm?: SwitchFormDef;  // alternate form accessible via SWITCH_FORM
 }
 
 export interface PassiveDef {
@@ -105,7 +124,16 @@ export interface CharacterState {
   abilityCooldownRemaining: number;
   abilityUsedThisGame: boolean;
   hasSwitchedThisTurn?: boolean; // for change characters
-  currentForm?: string;         // for multi-form characters
+  currentForm?: string;         // for multi-form characters (e.g. 'zamasu')
+  // Benched form state (for change characters — Zamasu when Black Goku is active, and vice versa)
+  benchedVida?: number;
+  benchedMaxVida?: number;
+  benchedAdvanceCounter?: number;
+  // Zamasu-specific tracking
+  formAbilityUsedThisGame?: boolean;  // Divine Intervention (heal +3)
+  formPassiveHealTotal?: number;     // Immortal Regeneration (max 3)
+  // Black Goku passive tracking
+  blackGokuPassiveTriggered?: boolean; // Zero Mortals: +1 ataque if healed from 1 HP
   // For A17&A18
   androide17Vida?: number;
   androide18Vida?: number;

@@ -52,23 +52,39 @@ export function handleEsferaDragon(
   const reviveType = cardEffect.split(':')[1] || 'full';
 
   if (reviveType === 'full') {
-    // Restore to full initial stats
-    targetChar.currentVida = charDef.stats.vida;
-    targetChar.maxVida = charDef.stats.vida;
-    targetChar.currentAtaque = charDef.stats.ataque;
-    targetChar.currentLentitud = charDef.stats.lentitud;
-    targetChar.advanceCounter = 0;
-    targetChar.shieldEquipped = false;
-    targetChar.isAlive = true;
-    targetChar.hasAttackedThisTurn = false;
-    targetChar.nubeKintonUsed = false;
+    // Handle switch-form characters (Rose+Zamasu) — both forms revive together
+    if (charDef.switchForm) {
+      state.reviveCharacter(actualPlayerIndex, targetCharacterId);
+      targetChar.currentAtaque = charDef.stats.ataque;
+      targetChar.currentLentitud = charDef.stats.lentitud;
+      targetChar.advanceCounter = 0;
+      targetChar.shieldEquipped = false;
+      targetChar.hasAttackedThisTurn = false;
+      targetChar.nubeKintonUsed = false;
+      targetChar.abilityUsedThisGame = false;
+      targetChar.abilityCooldownRemaining = 0;
+      targetChar.formAbilityUsedThisGame = false;
+      targetChar.formPassiveHealTotal = 0;
+      targetChar.blackGokuPassiveTriggered = false;
+      targetChar.hasSwitchedThisTurn = false;
+    } else {
+      // Restore to full initial stats
+      targetChar.currentVida = charDef.stats.vida;
+      targetChar.maxVida = charDef.stats.vida;
+      targetChar.currentAtaque = charDef.stats.ataque;
+      targetChar.currentLentitud = charDef.stats.lentitud;
+      targetChar.advanceCounter = 0;
+      targetChar.shieldEquipped = false;
+      targetChar.isAlive = true;
+      targetChar.hasAttackedThisTurn = false;
+      targetChar.nubeKintonUsed = false;
 
-    // Reset habilidad so it can be used again
-    targetChar.abilityUsedThisGame = false;
-    targetChar.abilityCooldownRemaining = 0;
+      // Reset habilidad so it can be used again
+      targetChar.abilityUsedThisGame = false;
+      targetChar.abilityCooldownRemaining = 0;
+    }
 
-    // Handle dual-form characters (Rose+Zamasu)
-    // A17&A18 dual-HP pools are also reset
+    // Handle A17&A18 dual-HP pools
     if (targetCharacterId === 'a17-a18') {
       const halfVida = Math.floor(charDef.stats.vida / 2);
       targetChar.androide17Vida = halfVida;

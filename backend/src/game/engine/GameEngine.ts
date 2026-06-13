@@ -616,13 +616,47 @@ export class GameEngine {
     characterId: string,
     targetCharacterId?: string
   ): EngineResult {
-    // Check the character has a habilidad defined
-    const charDef = this.state.getCharacterDef(characterId);
-    if (!charDef?.abilities?.habilidad) {
+    const char = this.state.getCharacter(playerIndex, characterId);
+    if (!char) {
       return {
         success: false,
-        error: { code: 'NO_HABILIDAD', message: `'${characterId}' has no habilidad.` },
+        error: { code: 'CHARACTER_NOT_FOUND', message: `Character '${characterId}' not found.` },
       };
+    }
+
+    const charDef = this.state.getCharacterDef(characterId);
+    if (!charDef) {
+      return {
+        success: false,
+        error: { code: 'CHARACTER_NOT_FOUND', message: `Character '${characterId}' not found.` },
+      };
+    }
+
+    // Determine which form's habilidad to use (primary or switch)
+    const useSwitchAbility =
+      charDef.switchForm &&
+      char.currentForm === charDef.switchForm.id &&
+      charDef.switchForm.abilities?.habilidad;
+
+    const abilityDef = useSwitchAbility
+      ? charDef.switchForm!.abilities!.habilidad!
+      : charDef.abilities?.habilidad;
+
+    if (!abilityDef) {
+      return {
+        success: false,
+        error: { code: 'NO_HABILIDAD', message: `'${characterId}' has no habilidad in current form.` },
+      };
+    }
+
+    // Track usage: switch forms use formAbilityUsedThisGame
+    if (useSwitchAbility) {
+      if (char.formAbilityUsedThisGame) {
+        return {
+          success: false,
+          error: { code: 'ABILITY_ALREADY_USED', message: 'Zamasu already used Divine Intervention this game.' },
+        };
+      }
     }
 
     const result = this.turn.handleUseHabilidad(this.state, characterId);
@@ -634,7 +668,7 @@ export class GameEngine {
     }
 
     // Route the ability's effect through CardEffectEngine
-    const habEffect = charDef.abilities.habilidad.effect;
+    const habEffect = abilityDef.effect;
     const effectResult = this.cards.resolve(
       this.state,
       playerIndex,
@@ -649,6 +683,11 @@ export class GameEngine {
       };
     }
 
+    // Mark usage
+    if (useSwitchAbility) {
+      char.formAbilityUsedThisGame = true;
+    }
+
     return { success: true };
   }
 
@@ -661,19 +700,60 @@ export class GameEngine {
       };
     }
 
-    char.hasSwitchedThisTurn = true;
-    char.currentForm = targetForm;
-
-    // Apply Zamasu form stats if switching
-    if (targetForm === 'zamasu' && characterId === 'ssj-rose-black-goku') {
-      const zamasuDef = this.state.getCharacterDef(characterId);
-      // Zamasu alternate form has different stats
-      char.currentVida = 4;
-      char.maxVida = 4;
-      char.currentAtaque = 1;
-      char.currentLentitud = 0;
-      char.currentForm = 'zamasu';
+    const def = this.state.getCharacterDef(characterId);
+    if (!def || !def.switchForm) {
+      return {
+        success: false,
+        error: { code: 'CANNOT_SWITCH', message: 'This character cannot switch forms.' },
+      };
     }
+
+    // Validate targetForm is valid
+    const isPrimary = char.currentForm === def.id;
+    if (targetForm !== def.id && targetForm !== def.switchForm.id) {
+      return {
+        success: false,
+        error: { code: 'INVALID_FORM', message: `Unknown form '${targetForm}'.` },
+      };
+    }
+
+    // Can't switch to the form already active
+    if (char.currentForm === targetForm) {
+      return {
+        success: false,
+        error: { code: 'ALREADY_IN_FORM', message: `Already in ${targetForm} form.` },
+      };
+    }
+
+    // ─── Swap active ↔ benched ──────────────────────────────────
+    // Save current active state → benched
+    const prevVida = char.currentVida;
+    const prevMaxVida = char.maxVida;
+    const prevLentitud = char.currentLentitud;
+    const prevAdvance = char.advanceCounter;
+
+    // Load benched state → active
+    char.currentVida = char.benchedVida ?? def.switchForm.stats.vida;
+    char.maxVida = char.benchedMaxVida ?? def.switchForm.stats.vida;
+
+    // Set lentitud based on target form
+    const isGoingToSwitch = targetForm === def.switchForm.id;
+    char.currentLentitud = isGoingToSwitch ? def.switchForm.stats.lentitud : def.stats.lentitud;
+
+    // Set ataque: base form stat + permanent Zero Mortals bonus if triggered
+    const baseAtk = isGoingToSwitch ? def.switchForm.stats.ataque : def.stats.ataque;
+    const zeroMortalsBonus = char.blackGokuPassiveTriggered ? 1 : 0;
+    char.currentAtaque = baseAtk + zeroMortalsBonus;
+
+    char.advanceCounter = char.benchedAdvanceCounter ?? 0;
+
+    // Save to benched
+    char.benchedVida = prevVida;
+    char.benchedMaxVida = prevMaxVida;
+    char.benchedAdvanceCounter = prevAdvance;
+
+    char.currentForm = targetForm;
+    char.hasSwitchedThisTurn = true;
 
     this.state.addLog('SWITCH_FORM', `${characterId} switched to ${targetForm}`);
     return { success: true };

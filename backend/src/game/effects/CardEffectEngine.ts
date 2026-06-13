@@ -106,7 +106,7 @@ export class CardEffectEngine {
       targetState.androide18Vida === undefined
     ) {
       targetState.currentVida = Math.max(0, targetState.currentVida - damage);
-      if (targetState.currentVida <= 0) targetState.isAlive = false;
+      if (targetState.currentVida <= 0) state.killCharacter(playerIndex, targetState.characterId);
       return;
     }
 
@@ -119,7 +119,7 @@ export class CardEffectEngine {
       (targetState.androide17Vida ?? 0) + (targetState.androide18Vida ?? 0);
     if (totalRemaining <= 0) {
       targetState.currentVida = 0;
-      targetState.isAlive = false;
+      state.killCharacter(playerIndex, targetState.characterId);
     } else {
       targetState.currentVida = totalRemaining;
     }

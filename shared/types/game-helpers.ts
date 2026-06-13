@@ -77,7 +77,7 @@ export function validPhasesForAction(actionType: GameAction['type']): GamePhase[
       return ['PRE_BATTLE'];
 
     case 'END_TURN':
-      return ['END_TURN'];
+      return ['WAITING_FOR_ACTION', 'ADVANCE', 'ATTACK', 'DEFENDER_RESPONSE', 'END_TURN'];
 
     default:
       return [];

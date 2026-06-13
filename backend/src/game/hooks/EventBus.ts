@@ -145,5 +145,49 @@ export function registerPassives(eventBus: EventBus): void {
         state.addLog('KI_PER_TURN', `A17&A18 grants +1 ki to Player ${i}`);
       }
     }
+
+    // Reset hasSwitchedThisTurn for all switch-form characters
+    for (let i = 0; i < 2; i++) {
+      for (const char of state.getPlayer(i).characters) {
+        if (char.hasSwitchedThisTurn) {
+          char.hasSwitchedThisTurn = false;
+        }
+      }
+    }
+  });
+
+  // ── Zamasu: Immortal Regeneration ───────────────────────────────
+  // At end of each turn (including the benched player's turns), heal Zamasu 1 HP
+  // if current < 3 and total healed from this passive < 3.
+  eventBus.on('post_turn', (state: GameStateManager) => {
+    for (let i = 0; i < 2; i++) {
+      for (const char of state.getPlayer(i).characters) {
+        // Only for ssj-rose-black-goku (has Zamasu form)
+        const def = state.getCharacterDef(char.characterId);
+        if (!def?.switchForm) continue;
+
+        // Determine Zamasu's current HP (active or benched)
+        const zamasuHp = char.currentForm === 'zamasu' ? char.currentVida : (char.benchedVida ?? 0);
+        const maxTotalHeal = 3;
+        const alreadyHealed = char.formPassiveHealTotal ?? 0;
+
+        // Passive only activates when Zamasu's HP < 3 and total healed < 3
+        if (zamasuHp >= 3 || alreadyHealed >= maxTotalHeal) continue;
+
+        // Heal 1
+        const newHp = zamasuHp + 1;
+        if (char.currentForm === 'zamasu') {
+          char.currentVida = Math.min(newHp, char.maxVida);
+        } else {
+          char.benchedVida = Math.min(newHp, char.benchedMaxVida ?? 4);
+        }
+        char.formPassiveHealTotal = (char.formPassiveHealTotal ?? 0) + 1;
+
+        state.addLog(
+          'PASSIVE',
+          `Zamasu (Player ${i}) regenerated 1 HP (total healed: ${char.formPassiveHealTotal}/3)`
+        );
+      }
+    }
   });
 }

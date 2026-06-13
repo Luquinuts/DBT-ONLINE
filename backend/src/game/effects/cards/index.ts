@@ -95,6 +95,7 @@ export function buildEffectRegistry(): Map<string, EffectHandler> {
   registry.set('rage_boost', handleRage);
   registry.set('reroll_battlefield', handleNaveEspacial);
   registry.set('revive', handleEsferaDragon);
+  registry.set('heal_ally', handleSemillaSenzu); // Zamasu Divine Intervention (heal_ally:3)
 
   return registry;
 }

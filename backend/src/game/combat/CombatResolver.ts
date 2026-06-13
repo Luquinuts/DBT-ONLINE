@@ -297,13 +297,13 @@ export class CombatResolver {
     } else {
       target.currentVida = Math.max(0, target.currentVida - damageDealt);
       if (target.currentVida <= 0) {
-        target.isAlive = false;
+        state.killCharacter(targetPlayerIndex, targetId);
         targetKilled = true;
       }
     }
 
     // Check for A17&A18 death (both die if one falls below thresholds)
-    if (target.characterId === 'a17-a18' && target.isAlive === false) {
+    if (target.characterId === 'a17-a18' && (target.isAlive as boolean) === false) {
       targetKilled = true;
     }
 
@@ -320,7 +320,7 @@ export class CombatResolver {
         // Apply counter damage to attacker
         attacker.currentVida = Math.max(0, attacker.currentVida - counterDamage);
         if (attacker.currentVida <= 0) {
-          attacker.isAlive = false;
+          state.killCharacter(attackerPlayerIndex, attackerId);
         }
         state.addLog(
           'COUNTER_DAMAGE',
@@ -378,7 +378,7 @@ export class CombatResolver {
     ) {
       // Fallback to normal damage
       targetState.currentVida = Math.max(0, targetState.currentVida - damage);
-      if (targetState.currentVida <= 0) targetState.isAlive = false;
+      if (targetState.currentVida <= 0) state.killCharacter(playerIndex, targetState.characterId);
       return damage;
     }
 
@@ -394,7 +394,7 @@ export class CombatResolver {
 
     if (totalRemaining <= 0) {
       targetState.currentVida = 0;
-      targetState.isAlive = false;
+      state.killCharacter(playerIndex, targetState.characterId);
     } else {
       targetState.currentVida = totalRemaining;
     }
@@ -437,7 +437,7 @@ export class CombatResolver {
 
     target.currentVida = Math.max(0, target.currentVida - baseDamage);
     if (target.currentVida <= 0) {
-      target.isAlive = false;
+      state.killCharacter(targetPlayerIndex, targetId);
     }
 
     state.addLog(

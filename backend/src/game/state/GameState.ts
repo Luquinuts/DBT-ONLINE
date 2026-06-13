@@ -40,6 +40,17 @@ export function createCharacterState(def: CharacterDef): CharacterState {
     result.androide18Vida = def.stats.vida - halfVida;
   }
 
+  // Initialize benched state for dual-form (switch) characters
+  if (def.switchForm) {
+    result.currentForm = def.id; // starts in primary form
+    result.benchedVida = def.switchForm.stats.vida;
+    result.benchedMaxVida = def.switchForm.stats.vida;
+    result.benchedAdvanceCounter = 0;
+    result.formAbilityUsedThisGame = false;
+    result.formPassiveHealTotal = 0;
+    result.blackGokuPassiveTriggered = false;
+  }
+
   return result;
 }
 
@@ -255,6 +266,45 @@ export class GameStateManager {
    */
   toJSON(): GameState {
     return JSON.parse(JSON.stringify(this.state));
+  }
+
+  /**
+   * Handle death for a switch-form character (e.g. SSJ Rosé Black Goku / Zamasu).
+   * If one form dies, both forms die together.
+   */
+  killCharacter(playerIndex: number, characterId: string): void {
+    const char = this.getCharacter(playerIndex, characterId);
+    if (!char) return;
+    char.isAlive = false;
+
+    const def = getCharacterById(characterId);
+    if (def?.switchForm) {
+      // Both forms die
+      char.currentVida = 0;
+      char.benchedVida = 0;
+    }
+  }
+
+  /**
+   * Handle revive for a switch-form character.
+   * Both forms revive together at full HP.
+   */
+  reviveCharacter(playerIndex: number, characterId: string, vidaOverride?: number): void {
+    const char = this.getCharacter(playerIndex, characterId);
+    if (!char) return;
+    char.isAlive = true;
+
+    const def = getCharacterById(characterId);
+    if (def?.switchForm) {
+      // Revive both forms at full (or override)
+      char.currentVida = vidaOverride ?? def.stats.vida;
+      char.maxVida = def.stats.vida;
+      char.benchedVida = vidaOverride ?? def.switchForm.stats.vida;
+      char.benchedMaxVida = def.switchForm.stats.vida;
+    } else {
+      char.currentVida = vidaOverride ?? def?.stats.vida ?? char.maxVida;
+      char.maxVida = def?.stats.vida ?? char.maxVida;
+    }
   }
 
   /**

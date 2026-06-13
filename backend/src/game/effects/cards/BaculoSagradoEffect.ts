@@ -55,11 +55,11 @@ export function handleBaculoSagrado(
 
   // Apply damage — handle A17&A18 dual-HP pool
   if (target.characterId === 'a17-a18') {
-    applyAndroidDamage(target, amount);
+    applyAndroidDamage(state, actualPlayerIndex, target, amount);
   } else {
     target.currentVida = Math.max(0, target.currentVida - amount);
     if (target.currentVida <= 0) {
-      target.isAlive = false;
+      state.killCharacter(actualPlayerIndex, targetCharacterId);
       state.addLog('DIRECT_KILL', `${targetCharacterId} killed by Báculo Sagrado.`);
     }
   }
@@ -72,6 +72,8 @@ export function handleBaculoSagrado(
  * Apply the correct split damage to A17&A18's dual-HP pools.
  */
 function applyAndroidDamage(
+  state: GameStateManager,
+  playerIndex: number,
   targetState: import('@dbt-online/shared').CharacterState,
   damage: number
 ): void {
@@ -80,7 +82,7 @@ function applyAndroidDamage(
     targetState.androide18Vida === undefined
   ) {
     targetState.currentVida = Math.max(0, targetState.currentVida - damage);
-    if (targetState.currentVida <= 0) targetState.isAlive = false;
+    if (targetState.currentVida <= 0) state.killCharacter(playerIndex, targetState.characterId);
     return;
   }
 
@@ -96,7 +98,7 @@ function applyAndroidDamage(
 
   if (totalRemaining <= 0) {
     targetState.currentVida = 0;
-    targetState.isAlive = false;
+    state.killCharacter(playerIndex, targetState.characterId);
   } else {
     targetState.currentVida = totalRemaining;
   }

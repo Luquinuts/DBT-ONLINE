@@ -416,6 +416,22 @@ export class ActionValidator {
       };
     }
 
+    // ── Battlefield: attack_front_only (Cell Games) ───────────
+    const gs = state.getState();
+    if (gs.battlefield?.effect === 'attack_front_only') {
+      const attackerIdx = state.getPlayer(playerIndex).characters.indexOf(attacker);
+      const targetIdx = state.getPlayer(targetPlayerIndex).characters.indexOf(target);
+      if (attackerIdx !== targetIdx) {
+        return {
+          valid: false,
+          error: {
+            code: 'BATTLEFIELD_BLOCKED',
+            message: `Cell Games: ${action.attackerId} can only attack the character in front (position ${attackerIdx}).`,
+          },
+        };
+      }
+    }
+
     return { valid: true };
   }
 
@@ -565,6 +581,24 @@ export class ActionValidator {
     playerIndex: number,
     action: GameAction & { type: 'SWITCH_FORM' }
   ): ValidationResult {
+    const gs = state.getState();
+
+    // Must be in the right phase (own turn, before attacking or ending)
+    if (gs.phase !== 'WAITING_FOR_ACTION') {
+      return {
+        valid: false,
+        error: { code: 'WRONG_PHASE', message: 'Can only switch forms during your action phase.' },
+      };
+    }
+
+    // Must be the player's turn
+    if (gs.currentPlayerIndex !== playerIndex) {
+      return {
+        valid: false,
+        error: { code: 'WRONG_TURN', message: 'It is not your turn.' },
+      };
+    }
+
     const character = state.getCharacter(playerIndex, action.characterId);
     if (!character) {
       return {
@@ -573,11 +607,36 @@ export class ActionValidator {
       };
     }
 
-    // Only Rose Black Goku can switch form for now
-    if (action.characterId !== 'ssj-rose-black-goku') {
+    // Character must be alive
+    if (!character.isAlive) {
+      return {
+        valid: false,
+        error: { code: 'CHARACTER_DEAD', message: 'Character is dead and cannot switch.' },
+      };
+    }
+
+    // Check character has switchForm
+    const def = state.getCharacterDef(action.characterId);
+    if (!def || !def.switchForm) {
       return {
         valid: false,
         error: { code: 'CANNOT_SWITCH', message: 'This character cannot switch forms.' },
+      };
+    }
+
+    // Validate targetForm is one of the two forms
+    if (action.targetForm !== def.id && action.targetForm !== def.switchForm.id) {
+      return {
+        valid: false,
+        error: { code: 'INVALID_FORM', message: `'${action.targetForm}' is not a valid form.` },
+      };
+    }
+
+    // Can't switch to the form already active
+    if (character.currentForm === action.targetForm) {
+      return {
+        valid: false,
+        error: { code: 'ALREADY_IN_FORM', message: `Already in ${action.targetForm} form.` },
       };
     }
 
@@ -586,6 +645,14 @@ export class ActionValidator {
       return {
         valid: false,
         error: { code: 'ALREADY_SWITCHED', message: 'Already switched forms this turn.' },
+      };
+    }
+
+    // Can't switch after attacking
+    if (character.hasAttackedThisTurn) {
+      return {
+        valid: false,
+        error: { code: 'ALREADY_ATTACKED', message: 'Cannot switch after attacking.' },
       };
     }
 

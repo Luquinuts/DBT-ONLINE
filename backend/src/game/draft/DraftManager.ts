@@ -1,6 +1,5 @@
 import type { GameStateManager, } from '../state/GameState';
 import { createCharacterState } from '../state/GameState';
-import { getCharacterById } from '../../data/characters';
 
 // ─── Draft Sequence Definition ────────────────────────────────────
 //
@@ -74,27 +73,6 @@ export class DraftManager {
 
     // Add to player's picks
     draft.picks[playerIndex].push(characterId);
-
-    // ─── Auto-pairing ──────────────────────────────────────────
-    // If this character has a paired companion, auto-draft it too.
-    const pickedDef = getCharacterById(characterId);
-    if (pickedDef?.pairedWith) {
-      const pairedId = pickedDef.pairedWith;
-      // Only add if not already picked by either player
-      if (
-        !draft.picks[0].includes(pairedId) &&
-        !draft.picks[1].includes(pairedId)
-      ) {
-        draft.picks[playerIndex].push(pairedId);
-        draft.availableCharacters = draft.availableCharacters.filter(
-          (id) => id !== pairedId
-        );
-        state.addLog(
-          'DRAFT_PICK',
-          `Auto-paired ${pairedId} with ${characterId} for Player ${playerIndex}`
-        );
-      }
-    }
 
     // Check if this step is complete
     const stepIndex = draft.pickSequence;

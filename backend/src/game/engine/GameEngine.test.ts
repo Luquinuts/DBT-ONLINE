@@ -65,6 +65,10 @@ function completeDraft(engine: GameEngine): { p1Picks: string[]; p2Picks: string
 /**
  * Places characters for both players and completes the PRE_BATTLE phase,
  * returning the state in WAITING_FOR_ACTION.
+ *
+ * Uses a neutral battlefield (Hyperbolic Time Chamber, effect: none) to
+ * avoid flaky test behavior from random battlefield effects like
+ * attack_front_only, hp:1, lentitud:1, etc.
  */
 function placeCharacters(engine: GameEngine, p1Picks: string[], p2Picks: string[]): void {
   let r = engine.handleAction(P1, { type: 'PLACE_CHARACTERS', order: p1Picks });
@@ -76,7 +80,11 @@ function placeCharacters(engine: GameEngine, p1Picks: string[], p2Picks: string[
   // After both place, phase should be PRE_BATTLE (not WAITING_FOR_ACTION)
   let s = engine.getState();
   expect(s.phase).toBe('PRE_BATTLE');
-  expect(s.battlefield).not.toBeNull();
+
+  // Override to a neutral battlefield so tests are deterministic
+  const gs = (engine as any).state.getState();
+  gs.battlefield = { id: 'hyperbolic-time-chamber', name: 'Hyperbolic Time Chamber', effect: 'none', description: '' };
+  expect(gs.battlefield).not.toBeNull();
 
   // Complete the pre-battle countdown to reach WAITING_FOR_ACTION
   engine.completePreBattle();
