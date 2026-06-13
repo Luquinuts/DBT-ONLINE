@@ -91,23 +91,18 @@ export default function SidebarLayout({ children }: { children: ReactNode }) {
       </header>
 
       {/* ─── Navigation tabs ───────────────────────────────── */}
-      <nav className="relative z-20 flex justify-center gap-6 px-4 pt-2 text-lg tracking-widest text-gray-400 md:gap-12 md:text-2xl">
+      <nav className="relative z-20 flex justify-center gap-6 px-4 pt-4 text-lg tracking-widest text-gray-400 md:gap-12 md:text-2xl">
         {NAV_ITEMS.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`nav-item relative font-bold uppercase transition-colors ${
-                isActive ? 'text-[#64ffda]' : 'text-gray-400 hover:text-[#64ffda]'
+              className={`nav-item font-bold uppercase ${
+                isActive ? 'active' : 'text-gray-400'
               }`}
             >
               {item.label}
-              <span
-                className={`absolute -bottom-1 left-0 h-0.5 bg-[#64ffda] transition-all duration-300 ${
-                  isActive ? 'w-full' : 'w-0'
-                }`}
-              />
             </Link>
           );
         })}
