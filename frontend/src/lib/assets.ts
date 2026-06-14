@@ -37,6 +37,11 @@ export function getCharacterImageSrc(characterId: string): string {
   return `/images/characters/${characterId}.png`;
 }
 
+/** Full-body character images for preview panels (fighting-game style). */
+export function getCharacterFullImageSrc(characterId: string): string {
+  return `/images/characters-full-image/${characterId}.png`;
+}
+
 // ─── Character icon images ────────────────────────────────────────
 
 /**
