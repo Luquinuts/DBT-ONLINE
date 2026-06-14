@@ -215,13 +215,13 @@ export function CharacterSelectScreen({ state, actions, playerName, opponentName
           <div className="w-full bg-black/60 rounded-xl border border-yellow-500/20 p-2 md:p-3 shadow-[0_0_30px_rgba(0,0,0,0.8)]">
             <div className="grid grid-cols-4 gap-1 place-items-center">
               {rosterItems.map(({ charId, locked, previewed, name }) => (
-                <button
-                  key={charId}
-                  onClick={() => !locked && handlePreview(charId)}
-                  disabled={locked || isDone}
-                  className={`
-                    w-16 h-16 sm:w-20 sm:h-20 bg-slate-800 rounded shadow-md overflow-hidden
-                    transition-all duration-100 cursor-pointer
+                  <button
+                    key={charId}
+                    onClick={() => !locked && handlePreview(charId)}
+                    disabled={locked || isDone}
+                    className={`
+                      w-14 h-20 sm:w-16 sm:h-24 bg-slate-800 rounded shadow-md overflow-hidden
+                      transition-all duration-100 cursor-pointer
                     ${locked
                       ? 'grayscale opacity-30 cursor-not-allowed pointer-events-none'
                       : previewed
