@@ -65,12 +65,11 @@ export function CharacterSelectScreen({ state, actions, playerName, opponentName
 
   // ─── Preview a character ──────────────────────────────
   const handlePreview = useCallback((charId: string) => {
-    if (isDone) return;
-    // Only allow previewing available characters
+    if (isDone || !isMyTurn) return;
     if (!draftAvailable.includes(charId)) return;
 
     setPreview({ characterId: charId, skinIndex: 0 });
-  }, [draftAvailable, isDone]);
+  }, [draftAvailable, isDone, isMyTurn]);
 
   // ─── Confirm selection ────────────────────────────────
   const handleConfirm = useCallback(() => {
@@ -198,7 +197,7 @@ export function CharacterSelectScreen({ state, actions, playerName, opponentName
           side={mySide}
           isActive={isMyTurn && !isDone}
           picks={myPicks}
-          preview={mySide === 'j1' ? preview : { characterId: null, skinIndex: 0 }}
+          preview={isMyTurn ? preview : { characterId: null, skinIndex: 0 }}
           onConfirm={handleConfirm}
           onChangeSkin={changeSkin}
           charFullSrc={charFullSrc}
@@ -218,7 +217,7 @@ export function CharacterSelectScreen({ state, actions, playerName, opponentName
                   <button
                     key={charId}
                     onClick={() => !locked && handlePreview(charId)}
-                    disabled={locked || isDone}
+                    disabled={locked || isDone || !isMyTurn}
                     className={`
                       w-14 h-20 sm:w-16 sm:h-24 bg-slate-800 rounded shadow-md overflow-hidden
                       transition-all duration-100 cursor-pointer
@@ -251,7 +250,7 @@ export function CharacterSelectScreen({ state, actions, playerName, opponentName
           side={opponentSide}
           isActive={!isMyTurn && !isDone}
           picks={opponentPicks}
-          preview={opponentSide === 'j2' ? preview : { characterId: null, skinIndex: 0 }}
+          preview={!isMyTurn ? preview : { characterId: null, skinIndex: 0 }}
           onConfirm={handleConfirm}
           onChangeSkin={changeSkin}
           charFullSrc={charFullSrc}
