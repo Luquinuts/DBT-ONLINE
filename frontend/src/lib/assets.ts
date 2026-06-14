@@ -1,10 +1,13 @@
 /**
  * Asset path resolvers for character / card / battlefield images.
  *
- * Naming convention (kebab-case .png):
- *   characters/ → {character-id}.png       e.g. ssj-god-goku.png
- *   cards/      → {card-base}.png          e.g. carga-ki.png, esquive.png
- *   battlefields/ → {battlefield-id}.png
+ * Naming convention (kebab-case .webp):
+ *   characters/ → {character-id}.webp       e.g. ssj-god-goku.webp
+ *   cards/      → {card-base}.png            e.g. carga-ki.png, esquive.png
+ *   battlefields/ → {battlefield-id}.webp
+ *
+ * Images are served as WebP (converted from PNG originals) for ~99% size reduction.
+ * Run `node scripts/convert-images.mjs` after adding new images.
  *
  * IMPORTANT: these are publicly served from /images/. No build step needed —
  * drop the file and it works.
@@ -34,12 +37,12 @@ export function getCardImageSrc(cardId: string): string | null {
  * Character IDs are already kebab-case (ssj-god-goku, golden-frieza, …).
  */
 export function getCharacterImageSrc(characterId: string): string {
-  return `/images/characters/${characterId}.png`;
+  return `/images/characters/${characterId}.webp`;
 }
 
 /** Full-body character images for preview panels (fighting-game style). */
 export function getCharacterFullImageSrc(characterId: string): string {
-  return `/images/characters-full-image/${characterId}.png`;
+  return `/images/characters-full-image/${characterId}.webp`;
 }
 
 // ─── Character icon images ────────────────────────────────────────
@@ -53,7 +56,7 @@ const characterIconFixes: Record<string, string> = {
 };
 
 export function getCharacterIconSrc(characterId: string): string {
-  return `/images/icons/characters/${characterIconFixes[characterId] || characterId}.png`;
+  return `/images/icons/characters/${characterIconFixes[characterId] || characterId}.webp`;
 }
 
 // ─── Background images ────────────────────────────────────────────
@@ -65,5 +68,5 @@ export function getBackgroundSrc(name: string): string {
 // ─── Battlefield images ───────────────────────────────────────────
 
 export function getBattlefieldImageSrc(battlefieldId: string): string {
-  return `/images/battlefields/${battlefieldId}.png`;
+  return `/images/battlefields/${battlefieldId}.webp`;
 }

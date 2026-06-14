@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import type { GameUIState } from '@/lib/gameReducer';
 import type { UseGameReturn } from '@/lib/useGame';
 import { CHARACTER_DISPLAY, type CharacterDisplayEntry } from '@/data/character-display';
@@ -116,22 +116,37 @@ export function CharacterSelectScreen({ state, actions, playerName, opponentName
   };
 
   // ─── Roster helpers ───────────────────────────────────
-  const isLocked = (charId: string): boolean => {
+  const isLocked = useCallback((charId: string): boolean => {
     return [...myPicks, ...opponentPicks].includes(charId);
-  };
+  }, [myPicks, opponentPicks]);
 
-  const isPreviewed = (charId: string): boolean => {
+  const isPreviewed = useCallback((charId: string): boolean => {
     return preview.characterId === charId;
-  };
+  }, [preview.characterId]);
 
   // ─── Team slot images ─────────────────────────────────
-  const charIconSrc = (charId: string): string => {
+  const charIconSrc = useCallback((charId: string): string => {
     return getCharacterIconSrc(charId);
-  };
+  }, []);
 
-  const charFullSrc = (charId: string): string => {
+  const charFullSrc = useCallback((charId: string): string => {
     return getCharacterFullImageSrc(charId);
-  };
+  }, []);
+
+  // ─── Memoized roster ──────────────────────────────────
+  const rosterItems = useMemo(() => {
+    const allIds = draftAvailable.concat(
+      [...myPicks, ...opponentPicks].filter(
+        (id, i, arr) => arr.indexOf(id) === i && !draftAvailable.includes(id)
+      )
+    );
+    return allIds.map((charId) => ({
+      charId,
+      locked: [...myPicks, ...opponentPicks].includes(charId),
+      previewed: preview.characterId === charId,
+      name: CHARACTER_DISPLAY[charId]?.displayName || charId,
+    }));
+  }, [draftAvailable, myPicks, opponentPicks, preview.characterId]);
 
   // ─── Render ───────────────────────────────────────────
   return (
@@ -199,42 +214,34 @@ export function CharacterSelectScreen({ state, actions, playerName, opponentName
         <div className="flex items-center justify-center md:w-2/4">
           <div className="w-full bg-black/60 rounded-xl border border-yellow-500/20 p-4 shadow-[0_0_30px_rgba(0,0,0,0.8)]">
             <div className="grid grid-cols-4 gap-2 md:gap-3 place-items-center">
-              {draftAvailable.concat(
-                // Show locked chars at the end so grid stays stable
-                [...myPicks, ...opponentPicks].filter(
-                  (id, i, arr) => arr.indexOf(id) === i && !draftAvailable.includes(id)
-                )
-              ).map((charId) => {
-                const locked = isLocked(charId);
-                const previewed = isPreviewed(charId);
-                return (
-                  <button
-                    key={charId}
-                    onClick={() => !locked && handlePreview(charId)}
-                    disabled={locked || isDone}
-                    className={`
-                      w-16 h-16 sm:w-20 sm:h-20 bg-slate-800 rounded shadow-md overflow-hidden
-                      transition-all duration-100 cursor-pointer
-                      ${locked
-                        ? 'grayscale opacity-30 cursor-not-allowed pointer-events-none'
-                        : previewed
-                          ? 'scale-105 z-15 border-2 border-yellow-400 shadow-[0_0_20px_rgba(251,191,36,0.6)]'
-                          : 'hover:scale-110 hover:z-20 hover:shadow-[0_0_15px_rgba(255,255,255,0.4)] hover:border-white border-2 border-transparent'
-                      }
-                    `}
-                    title={CHARACTER_DISPLAY[charId]?.displayName || charId}
-                  >
-                    <img
-                      src={charIconSrc(charId)}
-                      alt={charId}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
-                  </button>
-                );
-              })}
+              {rosterItems.map(({ charId, locked, previewed, name }) => (
+                <button
+                  key={charId}
+                  onClick={() => !locked && handlePreview(charId)}
+                  disabled={locked || isDone}
+                  className={`
+                    w-16 h-16 sm:w-20 sm:h-20 bg-slate-800 rounded shadow-md overflow-hidden
+                    transition-all duration-100 cursor-pointer
+                    ${locked
+                      ? 'grayscale opacity-30 cursor-not-allowed pointer-events-none'
+                      : previewed
+                        ? 'scale-105 z-15 border-2 border-yellow-400 shadow-[0_0_20px_rgba(251,191,36,0.6)]'
+                        : 'hover:scale-110 hover:z-20 hover:shadow-[0_0_15px_rgba(255,255,255,0.4)] hover:border-white border-2 border-transparent'
+                    }
+                  `}
+                  title={name}
+                >
+                  <img
+                    src={getCharacterIconSrc(charId)}
+                    alt={name}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                </button>
+              ))}
             </div>
           </div>
         </div>
@@ -296,7 +303,7 @@ interface PlayerPanelProps {
   isMyPanel: boolean;
 }
 
-function PlayerPanel({
+const PlayerPanel = memo(function PlayerPanel({
   side,
   isActive,
   picks,
@@ -374,6 +381,8 @@ function PlayerPanel({
               src={charFullSrc(preview.characterId!)}
               alt={preview.characterId}
               className="w-full h-full object-cover object-top"
+              loading="eager"
+              fetchPriority="high"
               onError={(e) => {
                 // Fallback: show icon instead
                 const target = e.target as HTMLImageElement;
@@ -381,7 +390,6 @@ function PlayerPanel({
                 target.style.padding = '20px';
                 target.src = charIconSrc(preview.characterId!);
               }}
-
             />
           </div>
 
@@ -448,4 +456,4 @@ function PlayerPanel({
       )}
     </div>
   );
-}
+});
