@@ -212,8 +212,8 @@ export function CharacterSelectScreen({ state, actions, playerName, opponentName
 
         {/* ─── ROSTER GRID ───────────────────────────── */}
         <div className="flex items-center justify-center md:w-2/4">
-          <div className="w-full bg-black/60 rounded-xl border border-yellow-500/20 p-4 shadow-[0_0_30px_rgba(0,0,0,0.8)]">
-            <div className="grid grid-cols-4 gap-2 md:gap-3 place-items-center">
+          <div className="w-full bg-black/60 rounded-xl border border-yellow-500/20 p-2 md:p-3 shadow-[0_0_30px_rgba(0,0,0,0.8)]">
+            <div className="grid grid-cols-4 gap-1 place-items-center">
               {rosterItems.map(({ charId, locked, previewed, name }) => (
                 <button
                   key={charId}
@@ -375,12 +375,12 @@ const PlayerPanel = memo(function PlayerPanel({
           }`}
         >
           {/* Character image */}
-          <div className="w-full flex-1 min-h-[200px] md:min-h-[280px] relative overflow-hidden mb-2 rounded border border-slate-600 bg-slate-800">
+          <div className="w-full flex-1 min-h-[200px] md:min-h-[280px] relative overflow-hidden mb-2 rounded border border-slate-600 bg-gradient-to-b from-slate-800 to-slate-900">
             <img
               key={preview.characterId + preview.skinIndex}
               src={charFullSrc(preview.characterId!)}
               alt={preview.characterId}
-              className="w-full h-full object-cover object-top"
+              className="w-full h-full object-contain p-2"
               loading="eager"
               fetchPriority="high"
               onError={(e) => {
