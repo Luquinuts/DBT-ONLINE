@@ -3,7 +3,7 @@
 import { useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGame } from '@/lib/useGame';
-import { DraftPhase } from '@/components/game/draft/DraftPhase';
+import { CharacterSelectScreen } from '@/components/game/CharacterSelectScreen';
 import { GameBoard } from '@/components/game/GameBoard';
 import { GameOverOverlay } from '@/components/game/GameOverOverlay';
 import { PreBattleReveal } from '@/components/game/PreBattleReveal';
@@ -93,9 +93,14 @@ export default function GamePage({ roomCode, playerId, playerName, isHost }: Pro
   // ─── Full-screen game ────────────────────────────────────
   return (
     <div className="relative min-h-screen bg-gray-900 text-white flex flex-col">
-      {/* Draft Phase */}
+      {/* Draft Phase — fighting game style */}
       {state.phase === 'DRAFT' && (
-        <DraftPhase state={state} actions={actions} />
+        <CharacterSelectScreen
+          state={state}
+          actions={actions}
+          playerName={playerName}
+          opponentName={opponentName}
+        />
       )}
 
       {/* Pre-Battle Reveal (fighting-game intro + ban stage) */}
