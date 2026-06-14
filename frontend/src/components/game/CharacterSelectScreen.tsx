@@ -234,7 +234,7 @@ export function CharacterSelectScreen({ state, actions, playerName, opponentName
                   <img
                     src={getCharacterIconSrc(charId)}
                     alt={name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain p-0.5"
                     loading="lazy"
                     onError={(e) => {
                       (e.target as HTMLImageElement).style.display = 'none';
